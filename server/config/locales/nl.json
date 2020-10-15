@@ -1,0 +1,9 @@
+{
+  "VAL_FAILED": "Validatie mislukt!",
+  "ORG_404": "Organisatie niet gevonden!",
+  "PROFILE_UPD": "Profiel geüpdatet!",
+  "USER_404": "Gebruiker niet gevonden!",
+  "USER_EXISTS": "Gebruiker bestaat al!",
+  "PASSWORD_NO_MATCH": "",
+  "INV_MAIL_SUCCESS": "Er is een uitnodigingsmail naar de gebruiker gestuurd!"
+}

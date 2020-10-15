@@ -1,0 +1,9 @@
+{
+  "VAL_FAILED": "Validation échouée!",
+  "ORG_404": "Organisation non trouvée!",
+  "PROFILE_UPD": "Profil mis à jour!",
+  "USER_404": "Utilisateur non trouvé!",
+  "USER_EXISTS": "L'utilisateur existe déjà!",
+  "PASSWORD_NO_MATCH": "",
+  "INV_MAIL_SUCCESS": "Un e-mail d'invitation a été envoyé à l'utilisateur!"
+}
