@@ -14,8 +14,8 @@ module.exports = {
         duration_unit: "month",
         amount: 0.00,
         sequence: 1,
-        stripe_subscription_id: "prod_IB5odmnRPmbPWn",
-        stripe_subscription_price: "plan_IB5o6yXmXKIfGQ",
+        stripe_subscription_id: "prod_IDLU7OJ4YOa9hg",
+        stripe_subscription_price: "plan_IDLVGIlyg88SLV",
         created_by: 0,
         modified_by: 0
       },
@@ -26,8 +26,8 @@ module.exports = {
         duration_unit: "month",
         amount: 20,
         sequence: 2,
-        stripe_subscription_id: "prod_IB4rVAsXcuRSyl",
-        stripe_subscription_price: "plan_IB4r4i1fJd02lF",
+        stripe_subscription_id: "prod_IDLW085f4dL4Bx",
+        stripe_subscription_price: "plan_IDLWF40LBbhzb7",
         created_by: 0,
         modified_by: 0
       },
@@ -38,8 +38,8 @@ module.exports = {
         duration_unit: "month",
         amount: 200,
         sequence: 3,
-        stripe_subscription_id: "prod_IB4s700Y1wxVQR",
-        stripe_subscription_price: "plan_IB4xudA9uZfpiz",
+        stripe_subscription_id: "prod_IDLWj3p3SgcHAc",
+        stripe_subscription_price: "plan_IDLXrzkBpeQmpY",
         created_by: 0,
         modified_by: 0
       }

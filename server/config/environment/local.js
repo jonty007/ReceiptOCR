@@ -5,9 +5,9 @@
 
 module.exports = {
   database: {
-    username: 'postgres',
-    password: 'vivek15',
-    name: 'postgres', // DB name
+    username: 'vivek',
+    password: 'vivek$15',
+    name: 'test', // DB name
     host: 'localhost',
     port: 5432,
     dialect: 'postgres',
@@ -46,16 +46,16 @@ module.exports = {
   //   nonce: // non key
   //   secret_key: // secret key
   // },
-  stripe: 'sk_test_51HaiBLIDwFeEHEEAr8SMmYp9AlbqUhzGTJCkTg40e1XPyS4xdb2FaE0lsPcdmSj1Oz2CmshHMBohLXZT95a9K4J300LWTNBsWJ',
+  stripe: 'sk_test_51HbrXVFJ4dMQPQR28zRrfi3wnNASSlgOn2KCYZAfsdjcYKJ3EF6zpAMZhd6DyHHrkJ48vXtVj8qva57H24yPQqkm00X6G1msrB',
   mail: 'smtp',
   smtp: {
     pool: true,
-    host: 'smtp.gmail.com',
+    host: 'smtp-relay.sendinblue.com',
     port: 587,
     secure: false,
     auth: {
-      user: 'raj309219@gmail.com',
-      pass: 'raj309219'
+      user: 'qdeveloper@quanteon.in',
+      pass: '74qPr62jK8cMdTJ5'
     }
   },
 
@@ -65,12 +65,12 @@ module.exports = {
   },
 
   mailOptions: {
-    from: 'raj309219@gmail.com',
-    replyTo: 'raj309219@gmail.com'
+    from: 'qdeveloper@quanteon.in',
+    replyTo: 'qdeveloper@quanteon.in'
   },
 
   emailDetails: {
-    supportEmail: 'raj309219@gmail.com',
+    supportEmail: 'qdeveloper@quanteon.in',
     appName: 'App'
   },
 

@@ -116,7 +116,7 @@ export async function signUpUser(data, transaction) {
           data: dataForToken,
           exp: defaultTimeToExpire
         });
-
+        console.log('token', encodeEmail);
       await verifyNewUser.send({
         to: email,
         use_alias: true,

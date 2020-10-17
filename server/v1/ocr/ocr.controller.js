@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import Busboy from 'busboy';
-import { finished } from 'nodemailer/lib/xoauth2';
+import { parse_receipt } from './ocr.service';
 
 const vision = require('@google-cloud/vision');
 const client = new vision.ImageAnnotatorClient();
@@ -28,7 +28,7 @@ ocr.post('/ocr/receipt', async (req, res, next) => {
         base64data.push(buffer);
       });
 
-      extractedText = await client.textDetection("/Users/viveksingh/Documents/vivek/learning/1_ODTPi2VcGSRdWkPzwqBJLg.png");
+      extractedText = await parse_receipt();
       return res.send({
         data: extractedText
       });
