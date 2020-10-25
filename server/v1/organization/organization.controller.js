@@ -7,6 +7,28 @@ import { inviteNewUser } from '../../common/services/email';
 
 const organization = Router();
 
+// Get organization details
+organization.get('/organization/:org_id', isAuthenticated(), async (req, res, next) => {
+  try {
+    let { org_id } = req.params;
+
+    let org = await Organization.findOne({
+      where: {
+        id: org_id,
+        deleted: false
+      }
+    });
+    return res.send(org);
+  } catch (e) {
+    if (e.message) {
+      return res.status(405).send({
+        message: e.message
+      });
+    }
+    return next(e);
+  }
+});
+
 /**
  * @api {put} /organization/:org_id  Updates the organization information
  * @apiName Update Organization
@@ -181,7 +203,8 @@ organization.post(
           where: {
             id: user_id,
             deleted: false
-          }
+          },
+          include: [...User.getStandardInclude()]
         });
 
       let [org, user] = await Promise.all([orgDb, userDb]);
@@ -198,9 +221,22 @@ organization.post(
         });
       }
 
+      if (!user.org) {
+        return res.status(400).send({
+          message: 'VAL_FAILED'
+        });
+      }
+
+      if (user.org.id !== org_id &&  user.user_type !== UserType.ORGANIZATION_ADMIN) {
+        return res.status(400).send({
+          message: 'VAL_FAILED'
+        });
+      }
+
       let newUser = await User.findOne({
         where: {
           email,
+          org_id,
           deleted: false
         }
       });
@@ -216,7 +252,7 @@ organization.post(
         first_name,
         last_name,
         org_id: org_id,
-        user_type: UserType.ORGANIZATION,
+        user_type: UserType.ORGANIZATION_USER,
         status: UserStatus.VERIFICATION_PENDING,
         created_by: user_id,
         modified_by: user_id
@@ -225,10 +261,11 @@ organization.post(
       const now = Date.now(),
         defaultTimeToExpire = now + 12 * 60 * 60 * 1000,
         encodeEmail = createJWT({
-          data: { email },
+          data: { email, org_id, org_user: true },
           exp: defaultTimeToExpire
         });
-
+      
+      console.log('email: ', encodeEmail);
       await inviteNewUser.send({
         to: email,
         use_alias: true,
@@ -238,6 +275,7 @@ organization.post(
         content_params: {
           name: `${first_name} ${last_name}`,
           invited_by_user_name: `${user.first_name} ${user.last_name}`,
+          org_code: org.org_code,
           invitation_token: encodeEmail
         }
       });

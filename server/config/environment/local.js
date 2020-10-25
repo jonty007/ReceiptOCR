@@ -54,8 +54,8 @@ module.exports = {
     port: 587,
     secure: false,
     auth: {
-      user: 'qdeveloper@quanteon.in',
-      pass: '74qPr62jK8cMdTJ5'
+      user: 'vivek.singh@quanteon.in',
+      pass: 'MGQHfka0zE5cTBxt'
     }
   },
 
@@ -91,11 +91,11 @@ module.exports = {
     baseGraphURL: 'https://graph.microsoft.com',
     userInfo: '/v1.0/me',
     storage: {
-      baseURL: '',
-      accountName: '',
-      key: '',
-      connectionString: '',
-      containerName: '' // This name may only contain lowercase letters, numbers, and hyphens, and must begin with a letter or a number. Each hyphen must be preceded and followed by a non-hyphen character. The name must also be between 3 and 63 characters long.
+      baseURL: 'https://atbr.blob.core.windows.net',
+      accountName: 'atbr',
+      key: '7yG/F53eUmuVr9NVayUT8lUq+qUqsum4Jp3CohO+BD//qsrN5ObxYl5Hewe+MXqDkkmYPyxcAssy2VYV0urfFg==',
+      connectionString: 'DefaultEndpointsProtocol=https;AccountName=atbr;AccountKey=7yG/F53eUmuVr9NVayUT8lUq+qUqsum4Jp3CohO+BD//qsrN5ObxYl5Hewe+MXqDkkmYPyxcAssy2VYV0urfFg==;EndpointSuffix=core.windows.net',
+      containerName: 'atbr' // This name may only contain lowercase letters, numbers, and hyphens, and must begin with a letter or a number. Each hyphen must be preceded and followed by a non-hyphen character. The name must also be between 3 and 63 characters long.
     }
   }
 };

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { isAuthenticated } from '../../middlewares';
-import { File, sequelize } from '../../db';
+import { File, User, Organization, sequelize } from '../../db';
 import Busboy from 'busboy';
 import mime from 'mime-types';
 import Streamer from 'stream';
@@ -376,7 +376,7 @@ file.get('/file/:file_id', isAuthenticated(), async (req, res, next) => {
  * @apiError (Error 400) ValidationError Validation failed!
  *
  */
-file.post('/file/azure/upload', async (req, res, next) => {
+file.post('/file/azure/upload', isAuthenticated(), async (req, res, next) => {
   try {
     const busboy = new Busboy({ headers: req.headers });
     busboy.on('file', (fieldname, fileData, filename, encoding, mime_type) => {
@@ -468,6 +468,281 @@ file.get('/file/azure/:file_name', async (req, res, next) => {
     }
 
     res.send({ response });
+  } catch (e) {
+    if (e.message) {
+      return res.status(405).send({
+        message: e.message
+      });
+    }
+    return next(e);
+  }
+});
+
+
+/**
+ *
+ * @api {post} /file/profile-picture/update Upload a file to local
+ * @apiName Update user profile
+ * @apiGroup File
+ * @apiHeader {String} authorization Users unique access-key.
+ * @apiHeader {String} Accept-Language language to get response for any messages from API. default to en (english)
+ *
+ * @apiParam (File) {File} file File
+ *
+ * @apiSuccessExample {json} Success-Response:
+ * {
+ *     "file_id": 1,
+ *     "name": "ABC.png"
+ * }
+ *
+ * @apiError (Error 400) ValidationError Validation failed!
+ *
+ */
+file.post('/file/profile-picture/update', isAuthenticated(), async (req, res, next) => {
+  try {
+    const { user_id } = req.user;
+    let fileObj = {};
+    const busboy = new Busboy({ headers: req.headers });
+    busboy.on('file', (fieldname, fileData, filename, encoding, mime_type) => {
+      if (!mime_type || !filename) {
+        return res.status(400).send({ message: 'VAL_FAILED!' });
+      }
+
+      const extension = mime.extension(mime_type);
+      let main_file_data_length = 0,
+        content = '';
+      fileData.on('data', data => {
+        main_file_data_length += data.length;
+        content += data;
+      });
+
+      fileData.on('end', async data => {
+        let  user = await User.findOne({
+          where: {
+            id: user_id
+          }
+        });
+
+        let file_instance = {
+          name: filename,
+          created_by: user_id,
+          modified_by: user_id,
+          mime_type,
+          extension,
+          content: content,
+          storage_type: StorageType.LOCAL,
+          file_size: main_file_data_length, //bytes
+          metadata: JSON.stringify({ encoding: encoding })
+        };
+
+        if (user.profile_picture_file_id) {
+          await File.update(file_instance, {
+            where: {
+              id: user.profile_picture_file_id
+            }
+          });
+          fileObj = {
+            file_id: user.profile_picture_file_id,
+            name: filename
+          };
+          res.send(fileObj);
+          return;
+        } else {
+          await sequelize.transaction(async transaction => {
+            let { id: file_id, name } = await File.create(file_instance, { transaction });
+            await User.update({
+              profile_picture_file_id: file_id
+            }, {
+              where: {
+                id: user_id
+              },
+              transaction
+            });
+
+            fileObj = {
+              file_id,
+              name
+            };
+          });
+          res.send(fileObj);
+          return;
+        }
+      });
+    });
+
+    req.pipe(busboy);
+  } catch (e) {
+    if (e.message) {
+      return res.status(405).send({
+        message: e.message
+      });
+    }
+    return next(e);
+  }
+});
+
+// get profile picture
+file.get('/file/profile-picture/:file_id', isAuthenticated(), async (req, res, next) => {
+  try {
+    let { file_id } = req.params;
+    if (!file_id) {
+      return res.status(400).send({ message: 'VAL_FAILED!' });
+    }
+
+    let fileRes = await File.findOne({
+      where: {
+        id: file_id,
+        deleted: false
+      }
+    });
+
+    if (!fileRes) {
+      return res.status(404).send({ message: 'FILE_404!' });
+    }
+
+    res.send(fileRes);
+  } catch (e) {
+    if (e.message) {
+      return res.status(405).send({
+        message: e.message
+      });
+    }
+    return next(e);
+  }
+});
+
+
+
+
+
+// company logo
+
+/**
+ *
+ * @api {post} /file/profile-picture/update Upload a file to local
+ * @apiName Update user profile
+ * @apiGroup File
+ * @apiHeader {String} authorization Users unique access-key.
+ * @apiHeader {String} Accept-Language language to get response for any messages from API. default to en (english)
+ *
+ * @apiParam (File) {File} file File
+ *
+ * @apiSuccessExample {json} Success-Response:
+ * {
+ *     "file_id": 1,
+ *     "name": "ABC.png"
+ * }
+ *
+ * @apiError (Error 400) ValidationError Validation failed!
+ *
+ */
+file.post('/file/company-logo/update', isAuthenticated(), async (req, res, next) => {
+  try {
+    const { user_id } = req.user;
+    let fileObj = {};
+    const busboy = new Busboy({ headers: req.headers });
+    busboy.on('file', (fieldname, fileData, filename, encoding, mime_type) => {
+      if (!mime_type || !filename) {
+        return res.status(400).send({ message: 'VAL_FAILED!' });
+      }
+
+      const extension = mime.extension(mime_type);
+      let main_file_data_length = 0,
+        content = '';
+      fileData.on('data', data => {
+        main_file_data_length += data.length;
+        content += data;
+      });
+
+      fileData.on('end', async data => {
+        let  user = await User.findOne({
+          where: {
+            id: user_id
+          },
+          include: [...User.getStandardInclude()]
+        });
+
+        let file_instance = {
+          name: filename,
+          created_by: user_id,
+          modified_by: user_id,
+          mime_type,
+          extension,
+          content: content,
+          storage_type: StorageType.LOCAL,
+          file_size: main_file_data_length, //bytes
+          metadata: JSON.stringify({ encoding: encoding })
+        };
+        if (user.org && user.org.company_logo_file_id) {
+          await File.update(file_instance, {
+            where: {
+              id: user.org.company_logo_file_id
+            }
+          });
+          fileObj = {
+            file_id: user.org.company_logo_file_id,
+            name: filename
+          };
+          res.send(fileObj);
+          return;
+        } else if (user.org) {
+          await sequelize.transaction(async transaction => {
+            let { id: file_id, name } = await File.create(file_instance, { transaction });
+            await Organization.update({
+              company_logo_file_id: file_id
+            }, {
+              where: {
+                id: user.org.id
+              },
+              transaction
+            });
+
+            fileObj = {
+              file_id,
+              name
+            };
+          });
+          res.send(fileObj);
+          return;
+        } else {
+          return res.status(405).send({
+            message: 'No organization found'
+          });
+        }
+      });
+    });
+
+    req.pipe(busboy);
+  } catch (e) {
+    if (e.message) {
+      return res.status(405).send({
+        message: e.message
+      });
+    }
+    return next(e);
+  }
+});
+
+// get profile picture
+file.get('/file/company-logo/:file_id', isAuthenticated(), async (req, res, next) => {
+  try {
+    let { file_id } = req.params;
+    if (!file_id) {
+      return res.status(400).send({ message: 'VAL_FAILED!' });
+    }
+
+    let fileRes = await File.findOne({
+      where: {
+        id: file_id,
+        deleted: false
+      }
+    });
+
+    if (!fileRes) {
+      return res.status(404).send({ message: 'FILE_404!' });
+    }
+
+    res.send(fileRes);
   } catch (e) {
     if (e.message) {
       return res.status(405).send({

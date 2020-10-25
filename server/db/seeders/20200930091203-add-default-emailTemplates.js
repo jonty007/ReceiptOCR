@@ -201,7 +201,7 @@ module.exports = {
             <p>Hi {{= it.name }},</p>
           
             <p>
-              You have been invited by {{= it.invited_by_user_name }} to join {{= it.config.emailDetails.appName}}.
+              You have been invited by {{= it.invited_by_user_name }} to join {{= it.config.emailDetails.appName}}. Your org code is {{= it.org_code }}. 
             </p>
             
             <p>

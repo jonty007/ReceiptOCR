@@ -10,6 +10,7 @@ import {
 } from '../../common/services/email';
 import { signUpUser, validateAccessToken } from './auth.service';
 import { createJWT, decodeJWT } from '../../common/auth.utils';
+import { Op } from 'sequelize';
 
 const auth = Router();
 const MAX_LOGIN_ATTEMPTS = 3;
@@ -156,6 +157,7 @@ auth.post('/auth/verify-user', async (req, res, next) => {
     } catch (error) {
       return res.status(400).send({ message: 'LINK_EXPIRED' });
     }
+    console.log('decodedObj: ', decodedObj);
 
     if (!decodedObj.email) {
       return res.status(400).send({
@@ -163,14 +165,29 @@ auth.post('/auth/verify-user', async (req, res, next) => {
       });
     }
 
-    let user = await User.findOne({
+    let user = null, org;
+
+    if (decodedObj.org_id && decodedObj.org_user) {
+      // verification for org users
+      user = await User.findOne({
         where: {
           email: decodedObj.email,
+          org_id: decodedObj.org_id,
           deleted: false
         },
         include: [...User.getPasswordInclude()]
-      }),
-      org;
+      });
+    } else {
+      // verfication  of main users
+      user = await User.findOne({
+        where: {
+          email: decodedObj.email,
+          user_type: {[Op.ne]: UserTypes.ORGANIZATION_USER},
+          deleted: false
+        },
+        include: [...User.getPasswordInclude()]
+      });
+    }
 
     if (!user) {
       return res.status(404).send({
@@ -292,18 +309,40 @@ auth.post('/auth/verify-user', async (req, res, next) => {
  */
 auth.post('/auth/login', async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, org_code } = req.body;
 
     if (!email || !password) {
       return res.status(400).send({ message: 'VAL_FAILED' });
     }
 
-    const user = await User.findOne({
-      where: {
-        email,
-        deleted: false
-      }
-    });
+    let org = null;
+
+    if (org_code) {
+      org = await Organization.findOne({
+        where: {
+          org_code,
+          deleted: false
+        }
+      });
+    }
+
+    let user = null;
+    if (org) {
+      user = await User.findOne({
+        where: {
+          email,
+          org_id: org.id,
+          deleted: false
+        }
+      });
+    } else {
+      user = await User.findOne({
+        where: {
+          email,
+          deleted: false
+        }
+      });
+    }
 
     if (!user) {
       return res.status(400).send({ message: 'LOGIN_ERROR' });
@@ -406,14 +445,28 @@ auth.post('/auth/login', async (req, res, next) => {
  */
 auth.post('/auth/forgot-password', async (req, res, next) => {
   try {
-    const { email } = req.body;
+    const { email, org_code } = req.body;
 
     if (!email) {
       return res.status(400).send({ message: 'VAL_FAILED' });
     }
 
-    const user = await User.findOne({ where: { email, deleted: false } }),
-      now = Date.now(),
+    let user = null;
+    if (org_code) {
+      let org = await Organization.findOne({
+        where: {
+          org_code,
+          deleted: false
+        }
+      });
+
+      user = await User.findOne({ where: { email, org_id: org.id, deleted: false } });
+
+    } else {
+      user = await User.findOne({ where: { email, deleted: false } });
+    }
+
+    const now = Date.now(),
       defaultTimeToExpire = now + 12 * 60 * 60 * 1000;
 
     if (!user) {
@@ -432,7 +485,7 @@ auth.post('/auth/forgot-password', async (req, res, next) => {
       data: { id: user.id },
       exp: defaultTimeToExpire
     });
-
+    
     forgotEmail
       .send({
         to: user.email,
@@ -628,12 +681,29 @@ auth.post('/auth/create-password', async (req, res, next) => {
       });
     }
 
-    let user = await User.findOne({
-      where: {
-        email: decodedObj.email,
-        deleted: false
-      }
-    });
+    let user = null;
+    console.log("decoded obj: ", decodedObj);
+    if (decodedObj.org_id && decodedObj.org_user) {
+      // verification for org users
+      user = await User.findOne({
+        where: {
+          email: decodedObj.email,
+          org_id: decodedObj.org_id,
+          deleted: false
+        },
+        include: [...User.getPasswordInclude()]
+      });
+    } else {
+      // verfication  of main users
+      user = await User.findOne({
+        where: {
+          email: decodedObj.email,
+          user_type: {[Op.ne]: UserTypes.ORGANIZATION_USER},
+          deleted: false
+        },
+        include: [...User.getPasswordInclude()]
+      });
+    }
 
     if (!user) {
       return res.status(400).send({
@@ -718,7 +788,7 @@ auth.post('/auth/create-password', async (req, res, next) => {
  */
 auth.post('/auth/resend-verification-link', async (req, res, next) => {
   try {
-    const { email } = req.body;
+    const { email, org_code } = req.body;
 
     if (!email) {
       return res.status(400).send({
@@ -729,6 +799,7 @@ auth.post('/auth/resend-verification-link', async (req, res, next) => {
     let user = await User.findOne({
       where: {
         email,
+        user_type: {[Op.ne]: UserTypes.ORGANIZATION_USER},
         deleted: false
       },
       include: [...User.getStandardInclude()]
@@ -749,7 +820,7 @@ auth.post('/auth/resend-verification-link', async (req, res, next) => {
     let emailObj = { email },
       invitingUser;
 
-    if (UserTypes.ORGANIZATION === user.user_type) {
+    if (UserTypes.ORGANIZATION_ADMIN === user.user_type) {
       if (!user.org) {
         return res.status(404).send({
           message: 'ORG_NOT_FOUND'

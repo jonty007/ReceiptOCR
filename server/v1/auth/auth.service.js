@@ -15,6 +15,7 @@ export async function signUpUser(data, transaction) {
   try {
     let { email, first_name, last_name, password, user_type } = data;
 
+    // finding user that are not working for any organization, these user can have main individual account for themselves
     const user = await User.findOne({
       where: {
         email,
