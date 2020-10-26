@@ -23,7 +23,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "gulp serve",
+    "start": "export NODE_ENV=local && npm run migrate && gulp serve",
     "start:dev": "export NODE_ENV=development && gulp serve",
     "migrate": "node_modules/.bin/sequelize db:migrate && node_modules/.bin/sequelize db:seed:all",
     "server": "export NODE_ENV=local && npm run migrate && npm run start",
