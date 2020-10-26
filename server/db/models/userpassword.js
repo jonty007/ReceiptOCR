@@ -1,6 +1,6 @@
 'use strict';
 
-const bcrypt = require('bcrypt'),
+const crypto = require('crypto'),
   { database } = require('../../config');
 
 module.exports = (sequelize, DataTypes) => {
@@ -70,8 +70,11 @@ module.exports = (sequelize, DataTypes) => {
         return;
       }
 
-      const hash = await bcrypt.hash(userPassword.password, 12);
-      // eslint-disable-next-line require-atomic-updates
+      const hash = await crypto
+        .createHash('RSA-SHA256')
+        .update(userPassword.password)
+        .digest('hex');
+
       userPassword.password = hash;
     };
 
@@ -92,7 +95,12 @@ module.exports = (sequelize, DataTypes) => {
       return false;
     }
 
-    const isMatch = await bcrypt.compare(password, this.password);
+    const hash = await crypto
+      .createHash('RSA-SHA256')
+      .update(password)
+      .digest('hex');
+
+    const isMatch = hash === this.password;
     return isMatch;
   };
 
