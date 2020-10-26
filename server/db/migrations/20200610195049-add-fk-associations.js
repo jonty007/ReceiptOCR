@@ -21,8 +21,8 @@ module.exports = {
           },
           // fk name convention: FK_<ParentTable>_<CurrentTable>
           name: 'FK_OrgTypes_Organizations', // useful if using queryInterface.removeConstraint
-          onDelete: 'cascade',
-          onUpdate: 'cascade'
+          onDelete: 'no action',
+          onUpdate: 'no action'
         }, { transaction }
       );
 
@@ -43,8 +43,8 @@ module.exports = {
           },
           // fk name convention: FK_<ParentTable>_<CurrentTable>
           name: 'FK_Files_Organizations', // useful if using queryInterface.removeConstraint
-          onDelete: 'cascade',
-          onUpdate: 'cascade'
+          onDelete: 'no action',
+          onUpdate: 'no action'
         }, { transaction }
       );
 
@@ -65,8 +65,8 @@ module.exports = {
           },
           // fk name convention: FK_<ParentTable>_<CurrentTable>
           name: 'FK_Payments_Organizations', // useful if using queryInterface.removeConstraint
-          onDelete: 'cascade',
-          onUpdate: 'cascade'
+          onDelete: 'no action',
+          onUpdate: 'no action'
         }, { transaction }
       );
 
@@ -87,8 +87,8 @@ module.exports = {
           },
           // fk name convention: FK_<ParentTable>_<CurrentTable>
           name: 'FK_Organizations_Users', // useful if using queryInterface.removeConstraint
-          onDelete: 'cascade',
-          onUpdate: 'cascade'
+          onDelete: 'no action',
+          onUpdate: 'no action'
         }, { transaction }
       );
 
@@ -109,8 +109,8 @@ module.exports = {
           },
           // fk name convention: FK_<ParentTable>_<CurrentTable>
           name: 'FK_Files_Users', // useful if using queryInterface.removeConstraint
-          onDelete: 'cascade',
-          onUpdate: 'cascade'
+          onDelete: 'no action',
+          onUpdate: 'no action'
         }, { transaction }
       );
 
@@ -131,8 +131,8 @@ module.exports = {
           },
           // fk name convention: FK_<ParentTable>_<CurrentTable>
           name: 'FK_Users_UserPasswords', // useful if using queryInterface.removeConstraint
-          onDelete: 'cascade',
-          onUpdate: 'cascade'
+          onDelete: 'no action',
+          onUpdate: 'no action'
         }, { transaction }
       );
 
@@ -153,8 +153,8 @@ module.exports = {
           },
           // fk name convention: FK_<ParentTable>_<CurrentTable>
           name: 'FK_Users_Payments', // useful if using queryInterface.removeConstraint
-          onDelete: 'cascade',
-          onUpdate: 'cascade'
+          onDelete: 'no action',
+          onUpdate: 'no action'
         }, { transaction }
       );
 
@@ -175,8 +175,8 @@ module.exports = {
           },
           // fk name convention: FK_<ParentTable>_<CurrentTable>
           name: 'FK_Organizations_Payments', // useful if using queryInterface.removeConstraint
-          onDelete: 'cascade',
-          onUpdate: 'cascade'
+          onDelete: 'no action',
+          onUpdate: 'no action'
         }, { transaction }
       );
 
@@ -197,8 +197,8 @@ module.exports = {
           },
           // fk name convention: FK_<ParentTable>_<CurrentTable>
           name: 'FK_SubscriptionPlans_Payments', // useful if using queryInterface.removeConstraint
-          onDelete: 'cascade',
-          onUpdate: 'cascade'
+          onDelete: 'no action',
+          onUpdate: 'no action'
         }, { transaction }
       );
 
@@ -219,8 +219,8 @@ module.exports = {
           },
           // fk name convention: FK_<ParentTable>_<CurrentTable>
           name: 'FK_Users_NotificationDevices', // useful if using queryInterface.removeConstraint
-          onDelete: 'cascade',
-          onUpdate: 'cascade'
+          onDelete: 'no action',
+          onUpdate: 'no action'
         }, { transaction }
       );
 

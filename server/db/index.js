@@ -39,7 +39,8 @@ db.init = ({
   pool,
   logging,
   operatorsAliases,
-  define
+  define,
+  dialectOptions
 } = {}) => {
   if (db.sequelize) {
     return db.sequelize;
@@ -53,7 +54,8 @@ db.init = ({
       pool,
       logging,
       operatorsAliases,
-      define
+      define,
+      dialectOptions
     },
     sequelize = new Sequelize(database, username, password, sequelize_config);
 

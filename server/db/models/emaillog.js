@@ -10,12 +10,12 @@ module.exports = (sequelize, DataTypes) => {
         unique: true
       },
       created_at: {
-        type: DataTypes.DATE(6),
+        type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
         allowNull: false
       },
       modified_at: {
-        type: DataTypes.DATE(6),
+        type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
         onUpdate: DataTypes.NOW,
         allowNull: false

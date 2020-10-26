@@ -26,8 +26,8 @@ module.exports = {
           allowNull: false
         },
         created_at: {
-          type: Sequelize.DATE(6),
-          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP(6)'),
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
           allowNull: false
         },
         modified_by: {
@@ -35,9 +35,9 @@ module.exports = {
           allowNull: false
         },
         modified_at: {
-          type: Sequelize.DATE(6),
-          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP(6)'),
-          onUpdate: Sequelize.literal('CURRENT_TIMESTAMP(6)'),
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+          onUpdate: Sequelize.literal('CURRENT_TIMESTAMP'),
           allowNull: false
         },
         deleted: {
@@ -46,7 +46,7 @@ module.exports = {
           defaultValue: false
         },
         deleted_at: {
-          type: Sequelize.DATE(6),
+          type: Sequelize.DATE,
           allowNull: true
         }
       },

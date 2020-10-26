@@ -5,17 +5,24 @@
 
 module.exports = {
   database: {
-    username: 'vivek',
+    username: 'testocr',
     password: 'vivek$15',
-    name: 'test', // DB name
-    host: 'localhost',
-    port: 5432,
-    dialect: 'postgres',
+    name: 'testocr', // DB name
+    host: 'testocr.database.windows.net',
+    port: 1433,
+    dialect: 'mssql',
     migrationStorage: 'sequelize',
     seederStorage: 'sequelize',
     migrationStorageTableSchema: 'test',
     schema: 'test',
     connectionLimit: 10,
+    dialectOptions: {
+      options: {
+      encrypt: true,
+      enableArithAbort: true,
+      trustServerCertificate: true
+      }
+    },
     pool: {
       max: 5,
       min: 0,
