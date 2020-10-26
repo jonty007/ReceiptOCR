@@ -1,5 +1,5 @@
 const {
-  database: { username, password, name: database, host, port, dialect, migrationStorage, seederStorage, schema, migrationStorageTableSchema }
+  database: { username, password, name: database, host, port, dialect, migrationStorage, seederStorage, schema, migrationStorageTableSchema, dialectOptions }
 } = require("./index");
 
 const databaseConfig = {
@@ -12,7 +12,8 @@ const databaseConfig = {
   migrationStorage,
   seederStorage,
   schema,
-  migrationStorageTableSchema
+  migrationStorageTableSchema,
+  dialectOptions
 };
 
 /**

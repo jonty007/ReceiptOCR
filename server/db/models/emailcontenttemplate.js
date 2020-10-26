@@ -29,7 +29,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false
       },
       created_at: {
-        type: DataTypes.DATE(6),
+        type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
         allowNull: false
       },
@@ -38,7 +38,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false
       },
       modified_at: {
-        type: DataTypes.DATE(6),
+        type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
         onUpdate: DataTypes.NOW,
         allowNull: false
@@ -49,7 +49,7 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: false
       },
       deleted_at: {
-        type: DataTypes.DATE(6),
+        type: DataTypes.DATE,
         allowNull: true
       }
     },
