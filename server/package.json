@@ -42,7 +42,6 @@
     "app-module-path": "^2.2.0",
     "awilix": "^4.2.6",
     "aws-sdk": "^2.599.0",
-    "bcrypt": "^3.0.7",
     "bluebird": "^3.7.2",
     "busboy": "^0.3.1",
     "composable-middleware": "^0.3.0",
