@@ -4,6 +4,7 @@ import { createJWT } from '../../common/auth.utils';
 import { createOrganization, addOrgCode } from '../organization/organization.service';
 import { verifyNewUser } from '../../common/services/email';
 import { Op } from 'sequelize';
+import { createLink } from '../../boundaries/firebase';
 
 const config = require('../../config'),
   request = require('request'),
@@ -117,14 +118,14 @@ export async function signUpUser(data, transaction) {
           data: dataForToken,
           exp: defaultTimeToExpire
         });
-        console.log('token', encodeEmail);
+      let data = await createLink('verifyAccount', encodeEmail);
       await verifyNewUser.send({
         to: email,
         use_alias: true,
         subject_params: {},
         content_params: {
           name: `${first_name} ${last_name}`,
-          invitation_token: encodeEmail
+          invitation_token: data.shortLink
         }
       });
     }

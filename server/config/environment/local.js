@@ -72,12 +72,12 @@ module.exports = {
   },
 
   mailOptions: {
-    from: 'qdeveloper@quanteon.in',
-    replyTo: 'qdeveloper@quanteon.in'
+    from: 'vivek.singh@quanteon.in',
+    replyTo: 'vivek.singh@quanteon.in'
   },
 
   emailDetails: {
-    supportEmail: 'qdeveloper@quanteon.in',
+    supportEmail: 'vivek.singh@quanteon.in',
     appName: 'App'
   },
 
@@ -103,6 +103,28 @@ module.exports = {
       key: '7yG/F53eUmuVr9NVayUT8lUq+qUqsum4Jp3CohO+BD//qsrN5ObxYl5Hewe+MXqDkkmYPyxcAssy2VYV0urfFg==',
       connectionString: 'DefaultEndpointsProtocol=https;AccountName=atbr;AccountKey=7yG/F53eUmuVr9NVayUT8lUq+qUqsum4Jp3CohO+BD//qsrN5ObxYl5Hewe+MXqDkkmYPyxcAssy2VYV0urfFg==;EndpointSuffix=core.windows.net',
       containerName: 'atbr' // This name may only contain lowercase letters, numbers, and hyphens, and must begin with a letter or a number. Each hyphen must be preceded and followed by a non-hyphen character. The name must also be between 3 and 63 characters long.
+    }
+  },
+  firebase: {
+    api: "https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=AIzaSyCQ9r7zoMYwKXd1UhfEhOo_Yv68kMTJ7-A",
+    link: "https://preciept-app.web.app",
+    config: {
+      "dynamicLinkInfo": {
+        "domainUriPrefix": "https://preciept.page.link",
+        "link": "https://preciept-app.web.app",
+        "androidInfo": {
+          "androidPackageName": "at.pits.preceipt",
+        },
+        "iosInfo": {
+          "iosBundleId": "at.pits.preceipt",
+        },
+        "navigationInfo": {
+          "enableForcedRedirect": true
+        }
+      },
+      "suffix": {
+        "option": "SHORT"
+      }
     }
   }
 };

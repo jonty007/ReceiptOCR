@@ -97,5 +97,51 @@ module.exports = {
       connectionString: '',
       containerName: '' // This name may only contain lowercase letters, numbers, and hyphens, and must begin with a letter or a number. Each hyphen must be preceded and followed by a non-hyphen character. The name must also be between 3 and 63 characters long.
     }
+  },
+  firebase: {
+    "dynamicLinkInfo": {
+      "domainUriPrefix": "https://preciept.page.link",
+      "link": "https://preciept-app.web.app",
+      "androidInfo": {
+        "androidPackageName": "at.pits.preceipt",
+        "androidFallbackLink": "",
+        "androidMinPackageVersionCode": ""
+      },
+      "iosInfo": {
+        "iosBundleId": "at.pits.preceipt",
+        "iosFallbackLink": "",
+        "iosCustomScheme": "",
+        "iosIpadFallbackLink": "",
+        "iosIpadBundleId": "",
+        "iosAppStoreId": ""
+      },
+      "navigationInfo": {
+        "enableForcedRedirect": true
+      },
+      "analyticsInfo": {
+        "googlePlayAnalytics": {
+          "utmSource": "",
+          "utmMedium": "",
+          "utmCampaign": "",
+          "utmTerm": "",
+          "utmContent": "",
+          "gclid": ""
+        },
+        "itunesConnectAnalytics": {
+          "at": "",
+          "ct": "",
+          "mt": "",
+          "pt": ""
+        }
+      },
+      "socialMetaTagInfo": {
+        "socialTitle": "",
+        "socialDescription": "",
+        "socialImageLink": ""
+      }
+    },
+    "suffix": {
+      "option": "SHORT"
+    }
   }
 };

@@ -4,6 +4,8 @@ import { verifyNewUser } from '../../common/services/email';
 import { createJWT } from '../../common/auth.utils';
 import { logger } from '../../app/app.logger';
 import { client } from '../../boundaries/stripe';
+import { createLink } from '../../boundaries/firebase';
+
 
 async function createStripeCustomer(email, user_details) {
   console.log(client);
@@ -122,13 +124,14 @@ export async function createPayment(payment_details, transaction) {
       console.log('token: ', encodeEmail);
 
     if (user_details.status === UserStatus.PAYMENT_PENDING) {
+      let data = await createLink('verifyAccount', encodeEmail);
       await verifyNewUser.send({
         to: user_details.email,
         use_alias: true,
         subject_params: {},
         content_params: {
           name: `${user_details.first_name} ${user_details.last_name}`,
-          invitation_token: encodeEmail
+          invitation_token: data.shortLink
         }
       });
     }

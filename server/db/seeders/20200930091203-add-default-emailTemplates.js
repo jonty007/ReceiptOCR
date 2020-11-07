@@ -183,7 +183,7 @@ module.exports = {
             <p>Hi {{= it.name }},</p>
           
             <p>
-              Complete your registration <a href="{{= it.config.host}}/verifyAccount/{{= it.invitation_token}}" target="_blank">here</a>
+              Complete your registration <a href="{{= it.invitation_token}}" target="_blank">here</a>
             </p>
     
             <p>
@@ -205,7 +205,7 @@ module.exports = {
             </p>
             
             <p>
-              Complete your registration <a href="{{= it.config.host}}/createPassword/{{= it.invitation_token}}" target="_blank">here</a>
+              Complete your registration <a href="{{= it.invitation_token}}" target="_blank">here</a>
             </p>
 
             <p>
@@ -242,7 +242,7 @@ module.exports = {
 
             <p>
               You can reset it by
-              <a href="{{= it.config.host}}/resetPassword/{{= it.reset_code }}">clicking&nbsp;here</a>.
+              <a href="{{= it.reset_code }}">clicking&nbsp;here</a>.
             </p>
 
             <p>

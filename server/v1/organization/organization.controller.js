@@ -4,6 +4,8 @@ import { Organization, User } from '../../db';
 import { UserStatus, UserTypes as UserType } from '../../common/Mappings';
 import { createJWT } from '../../common/auth.utils';
 import { inviteNewUser } from '../../common/services/email';
+import { createLink } from '../../boundaries/firebase';
+
 
 const organization = Router();
 
@@ -266,6 +268,7 @@ organization.post(
         });
       
       console.log('email: ', encodeEmail);
+      let data = await createLink('createPassword', encodeEmail);
       await inviteNewUser.send({
         to: email,
         use_alias: true,
@@ -276,7 +279,7 @@ organization.post(
           name: `${first_name} ${last_name}`,
           invited_by_user_name: `${user.first_name} ${user.last_name}`,
           org_code: org.org_code,
-          invitation_token: encodeEmail
+          invitation_token: data.shortLink
         }
       });
 

@@ -11,6 +11,7 @@ import {
 import { signUpUser, validateAccessToken } from './auth.service';
 import { createJWT, decodeJWT } from '../../common/auth.utils';
 import { Op } from 'sequelize';
+import { createLink } from '../../boundaries/firebase';
 
 const auth = Router();
 const MAX_LOGIN_ATTEMPTS = 3;
@@ -82,9 +83,9 @@ auth.post('/auth/sign-up', async (req, res, next) => {
     if ((UserTypes.ORGANIZATION_ADMIN === user_type) && !organization) {
       return res.status(400).send({ message: 'ORG_MANDATORY' });
     }
-
+    let user;
     await sequelize.transaction(async transaction => {
-      await signUpUser(
+      user = await signUpUser(
         {
           email,
           first_name,
@@ -100,7 +101,7 @@ auth.post('/auth/sign-up', async (req, res, next) => {
       );
     });
 
-    return res.send({ message: 'USER_CREATED' });
+    return res.send({ message: 'USER_CREATED', user: user.user_json });
   } catch (e) {
     if (e.message) {
       return res.status(405).send({
@@ -486,12 +487,13 @@ auth.post('/auth/forgot-password', async (req, res, next) => {
       exp: defaultTimeToExpire
     });
     
+    let data = await createLink('resetPassword', encodeUserId);
     forgotEmail
       .send({
         to: user.email,
         content_params: {
           name: `${user.first_name} ${user.last_name}`,
-          reset_code: encodeUserId
+          reset_code: data.shortLink
         }
       })
       .catch(() => {}); // ignore if email fails?
@@ -847,6 +849,7 @@ auth.post('/auth/resend-verification-link', async (req, res, next) => {
       });
 
     if (invitingUser) {
+      let data = await createLink('createPassword', encodeEmail);
       await inviteNewUser.send({
         to: email,
         use_alias: true,
@@ -856,17 +859,18 @@ auth.post('/auth/resend-verification-link', async (req, res, next) => {
         content_params: {
           name: `${user.first_name} ${user.last_name}`,
           invited_by_user_name: `${invitingUser.first_name} ${invitingUser.last_name}`,
-          invitation_token: encodeEmail
+          invitation_token: data.shortLink
         }
       });
     } else {
+      let data = await createLink('verifyAccount', encodeEmail);
       await verifyNewUser.send({
         to: email,
         use_alias: true,
         subject_params: {},
         content_params: {
           name: `${user.first_name} ${user.last_name}`,
-          invitation_token: encodeEmail
+          invitation_token: data.shortLink
         }
       });
     }
