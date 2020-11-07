@@ -74,7 +74,7 @@ module.exports = {
     appName: 'App'
   },
 
-  host: 'http://localhost:4001/client',
+  host: 'https://elitemantra.com/deeplink',
   https: false,
   http: {},
   client: true,
