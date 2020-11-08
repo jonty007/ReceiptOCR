@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { isAuthenticated } from '../../middlewares';
-import { sequelize } from '../../db';
+import { SubscriptionPlan, sequelize } from '../../db';
 import {
   cancelSubscription,
   createPayment,
@@ -11,6 +11,26 @@ import {
 } from './payment.service';
 
 const payment = Router();
+
+payment.get('/payment/plans', async (req, res, next) => {
+  try {
+    let plans = await SubscriptionPlan.findAndCountAll({
+      where: {
+        deleted: false
+      }
+    });
+
+    return res.send(plans);
+  } catch (e) {
+    if (e.message) {
+      return res.status(405).send({
+        message: e.message
+      });
+    }
+    return next(e);
+  }
+});
+
 
 /**
  * @api {get} /payment/:id  Find payment details by payment id

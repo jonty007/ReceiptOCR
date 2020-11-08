@@ -133,7 +133,7 @@ module.exports = (sequelize, DataTypes) => {
       where: { deleted: false },
       required: false,
       association: _models.User.Organization,
-      attributes: ['id', 'name', 'org_type_id', 'email'],
+      attributes: ['id', 'name', 'org_type_id', 'email', 'org_code'],
       include: [..._models.Organization.getStandardInclude()]
     },
     {

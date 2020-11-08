@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { isAuthenticated } from '../../middlewares';
-import { User } from '../../db';
+import { User,  Organization } from '../../db';
 import { UserStatus, UserTypes } from '../../common/Mappings';
 
 const users = Router();
@@ -208,65 +208,26 @@ users.get('/user/all', isAuthenticated(), async (req, res, next) => {
   }
 });
 
-// users.post('/user/create-org-user/:orgid', isAuthenticated(), async (req, res, next) => {
-//   try {
-//     const { user_id } = req.user;
-//     const { orgid } = req.params;
-//     const { first_name, last_name, email } = req.body;
+// get all the organization of a user
+users.get('/user/:email/orgs', async (req, res, next) => {
+  try {
+    let { email } = req.params;
+    let orgs = await User.findAndCountAll({
+      where: {
+        deleted: false,
+        email,
+        user_type: UserTypes.ORGANIZATION_USER
+      }
+    });
 
-//     let user = await User.findOne({
-//       where: {
-//         id: user_id,
-//         deleted: false
-//       },
-//       include: [...User.getStandardInclude()]
-//     });
-//     if (!user.org) {
-//       return res.status(400).send({
-//         message: 'VAL_FAILED'
-//       });
-//     }
-//     if (user.org.id !== orgid &&  user.user_type !== UserTypes.ORGANIZATION_ADMIN) {
-//       return res.status(400).send({
-//         message: 'VAL_FAILED'
-//       });
-//     }
-
-//     let existingUser = await User.findOne({
-//       where: {
-//         email,
-//         org_id: orgid,
-//         deleted:  false
-//       }
-//     });
-
-//     if (existingUser) {
-//       return res.status(400).send({
-//         message: 'USER_EXIST_ORG'
-//       });
-//     }
-
-//     await User.create({
-//       email,
-//       first_name,
-//       last_name,
-//       org_id: org_id,
-//       user_type: UserTypes.ORGANIZATION_USER,
-//       status: UserStatus.VERIFICATION_PENDING,
-//       created_by: user_id,
-//       modified_by: user_id
-//     });
-
-//     console.log(user);
-//     return res.send({"name": "data"});
-//   } catch (e) {
-//     if (e.message) {
-//       return res.status(405).send({
-//         message: e.message
-//       });
-//     }
-//     return next(e);
-//   }
-// });
-
+    return res.send(orgs);
+  } catch (e) {
+    if (e.message) {
+      return res.status(405).send({
+        message: e.message
+      });
+    }
+    return next(e);
+  }
+})
 export default users;
