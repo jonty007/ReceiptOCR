@@ -52,7 +52,7 @@ module.exports = {
   //   algorithm: // algo: aes-256-gcm
   //   nonce: // non key
   //   secret_key: // secret key
-  // },
+  //  },
   stripe: 'sk_test_51HbrXVFJ4dMQPQR28zRrfi3wnNASSlgOn2KCYZAfsdjcYKJ3EF6zpAMZhd6DyHHrkJ48vXtVj8qva57H24yPQqkm00X6G1msrB',
   mail: 'smtp',
   smtp: {
