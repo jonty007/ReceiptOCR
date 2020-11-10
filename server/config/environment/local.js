@@ -107,11 +107,11 @@ module.exports = {
   },
   firebase: {
     api: "https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=AIzaSyCRciNM3ESX_8Sj3ezMPZcdpd_82gj9Dq0",
-    link: "https://preciept-app.web.app",
+    link: "https://preceipt-app.web.app",
     config: {
       "dynamicLinkInfo": {
-        "domainUriPrefix": "https://preciept.page.link",
-        "link": "https://preciept-app.web.app",
+        "domainUriPrefix": "https://preceipt.page.link",
+        "link": "https://preceipt-app.web.app",
         "androidInfo": {
           "androidPackageName": "at.pits.preceipt",
         },
