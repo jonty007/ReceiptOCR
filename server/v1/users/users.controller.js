@@ -212,13 +212,25 @@ users.get('/user/all', isAuthenticated(), async (req, res, next) => {
 users.get('/user/:email/orgs', async (req, res, next) => {
   try {
     let { email } = req.params;
-    let orgs = await User.findAndCountAll({
+    console.log(email);
+    let users = await User.findAndCountAll({
       where: {
         deleted: false,
         email,
         user_type: UserTypes.ORGANIZATION_USER
-      }
+      },
+      include: [...User.getMinimalInclude()]
     });
+
+    console.log(users);
+    let orgs = [];
+    if (users.rows) {
+      users.rows.forEach(user => {
+        if(user.org) {
+          orgs.push(user.org);
+        }
+      });
+    }
 
     return res.send(orgs);
   } catch (e) {

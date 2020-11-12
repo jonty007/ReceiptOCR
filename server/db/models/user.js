@@ -143,6 +143,20 @@ module.exports = (sequelize, DataTypes) => {
     }
   ];
 
+  User.getMinimalInclude = ({ condition } = {}) => [
+    {
+      where: { deleted: false },
+      required: false,
+      association: _models.User.Organization,
+      attributes: ['id', 'name', 'org_type_id', 'email', 'org_code']
+    },
+    {
+      where: { deleted: false },
+      required: false,
+      association: _models.User.ProfilePicture
+    }
+  ];
+
   User.getPasswordInclude = ({ condition } = {}) => [
     {
       where: { deleted: false },
