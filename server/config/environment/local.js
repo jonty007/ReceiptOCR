@@ -13,8 +13,8 @@ module.exports = {
     dialect: 'mssql',
     migrationStorage: 'sequelize',
     seederStorage: 'sequelize',
-    migrationStorageTableSchema: 'test',
-    schema: 'test',
+    migrationStorageTableSchema: 'dbo',
+    schema: 'dbo',
     connectionLimit: 10,
     dialectOptions: {
       options: {
