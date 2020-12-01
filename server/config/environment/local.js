@@ -5,10 +5,10 @@
 
 module.exports = {
   database: {
-    username: 'testocr',
-    password: 'vivek$15',
-    name: 'testocr', // DB name
-    host: 'testocr.database.windows.net',
+    username: 'vivek',
+    password: 'testocr$15',
+    name: 'preceipttest', // DB name
+    host: 'preceipt.database.windows.net',
     port: 1433,
     dialect: 'mssql',
     migrationStorage: 'sequelize',

@@ -27,3 +27,7 @@ export const StorageType = {
   AZURE: 'AZURE',
   S3: 'S3'
 };
+
+export const FileContainers = {
+  ATBR: 'atbr'
+}

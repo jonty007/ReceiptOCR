@@ -21,6 +21,8 @@ export default function(app) {
   v1router.use(require('../v1/subscription_plans/subscription_plans.controller').default);
   v1router.use(require('../v1/users/users.controller').default);
   v1router.use(require('../v1/ocr/ocr.controller').default);
+  v1router.use(require('../v1/reference/reference.controller').default);
+  v1router.use(require('../v1/receipt/receipt.controller').default);
 
   /* Matches in client dist folder for any unmatched routes */
   if (apidoc === true) {
