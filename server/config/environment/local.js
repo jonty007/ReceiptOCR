@@ -98,11 +98,11 @@ module.exports = {
     baseGraphURL: 'https://graph.microsoft.com',
     userInfo: '/v1.0/me',
     storage: {
-      baseURL: 'https://atbr.blob.core.windows.net',
-      accountName: 'atbr',
-      key: '7yG/F53eUmuVr9NVayUT8lUq+qUqsum4Jp3CohO+BD//qsrN5ObxYl5Hewe+MXqDkkmYPyxcAssy2VYV0urfFg==',
-      connectionString: 'DefaultEndpointsProtocol=https;AccountName=atbr;AccountKey=7yG/F53eUmuVr9NVayUT8lUq+qUqsum4Jp3CohO+BD//qsrN5ObxYl5Hewe+MXqDkkmYPyxcAssy2VYV0urfFg==;EndpointSuffix=core.windows.net',
-      containerName: 'atbr' // This name may only contain lowercase letters, numbers, and hyphens, and must begin with a letter or a number. Each hyphen must be preceded and followed by a non-hyphen character. The name must also be between 3 and 63 characters long.
+      baseURL: 'https://pdocs.blob.core.windows.net',
+      accountName: 'pdocs',
+      key: 'TYHLdNmnPbYqR9M31m4mv2jsqMzvt77pHY7AJJS7lb6WHNU+GCwn23cn+QuF7NuDc5RwIx5JNIK/R5YpCLtdMw==',
+      connectionString: 'DefaultEndpointsProtocol=https;AccountName=pdocs;AccountKey=TYHLdNmnPbYqR9M31m4mv2jsqMzvt77pHY7AJJS7lb6WHNU+GCwn23cn+QuF7NuDc5RwIx5JNIK/R5YpCLtdMw==;EndpointSuffix=core.windows.net',
+      containerName: 'pdocs' // This name may only contain lowercase letters, numbers, and hyphens, and must begin with a letter or a number. Each hyphen must be preceded and followed by a non-hyphen character. The name must also be between 3 and 63 characters long.
     }
   },
   firebase: {
