@@ -37,6 +37,27 @@ module.exports = (sequelize, DataTypes) => {
         phone: {
           type: DataTypes.STRING
         },
+        street: {
+          type: DataTypes.STRING
+        }, 
+        zip:  {
+          type: DataTypes.STRING
+        }, 
+        city: {
+          type: DataTypes.STRING
+        }, 
+        country: {
+          type: DataTypes.STRING
+        }, 
+        vat_number: {
+          type: DataTypes.STRING
+        },
+        contact_person_name:  {
+          type: DataTypes.STRING
+        },
+        contact_person_phone:  {
+          type: DataTypes.STRING
+        },
         is_active: {
           type: DataTypes.BOOLEAN,
           allowNull: false,

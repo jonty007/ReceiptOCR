@@ -36,6 +36,27 @@ module.exports = {
         phone: {
           type: Sequelize.STRING
         },
+        street: {
+          type: Sequelize.STRING
+        }, 
+        zip:  {
+          type: Sequelize.STRING
+        }, 
+        city: {
+          type: Sequelize.STRING
+        }, 
+        country: {
+          type: Sequelize.STRING
+        }, 
+        vat_number: {
+          type: Sequelize.STRING
+        },
+        contact_person_name:  {
+          type: Sequelize.STRING
+        },
+        contact_person_phone:  {
+          type: Sequelize.STRING
+        },
         is_active: {
           type: Sequelize.BOOLEAN,
           allowNull: false,

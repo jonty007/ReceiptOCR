@@ -179,7 +179,7 @@ auth.post('/auth/verify-user', async (req, res, next) => {
         include: [...User.getPasswordInclude()]
       });
     } else {
-      // verfication  of main users
+      // verification  of main users
       user = await User.findOne({
         where: {
           email: decodedObj.email,

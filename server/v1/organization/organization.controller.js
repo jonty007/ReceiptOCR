@@ -6,7 +6,6 @@ import { createJWT } from '../../common/auth.utils';
 import { inviteNewUser } from '../../common/services/email';
 import { createLink } from '../../boundaries/firebase';
 
-
 const organization = Router();
 
 // Get organization details
@@ -64,7 +63,18 @@ organization.put('/organization/:org_id', isAuthenticated(), async (req, res, ne
   try {
     let { org_id } = req.params,
       { actual_user_id } = req.user,
-      { description, company_logo_file_id, email, phone } = req.body;
+      {
+        description,
+        email,
+        phone,
+        street,
+        zip,
+        city,
+        country,
+        vat_number,
+        contact_person_name,
+        contact_person_number
+      } = req.body;
 
     if (!org_id) {
       return res.status(400).send({
@@ -87,9 +97,15 @@ organization.put('/organization/:org_id', isAuthenticated(), async (req, res, ne
 
     await org.update({
       description,
-      company_logo_file_id,
       email,
       phone,
+      street,
+      zip,
+      city,
+      country,
+      vat_number,
+      contact_person_name,
+      contact_person_number,
       modified_by: actual_user_id
     });
 
@@ -229,7 +245,7 @@ organization.post(
         });
       }
 
-      if (user.org.id !== org_id &&  user.user_type !== UserType.ORGANIZATION_ADMIN) {
+      if (user.org.id !== org_id && user.user_type !== UserType.ORGANIZATION_ADMIN) {
         return res.status(400).send({
           message: 'VAL_FAILED'
         });
@@ -266,7 +282,7 @@ organization.post(
           data: { email, org_id, org_user: true },
           exp: defaultTimeToExpire
         });
-      
+
       console.log('email: ', encodeEmail);
       let data = await createLink('createPassword', encodeEmail);
       await inviteNewUser.send({

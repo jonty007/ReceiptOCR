@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { isAuthenticated } from '../../middlewares';
-import { User,  Organization } from '../../db';
-import { UserStatus, UserTypes } from '../../common/Mappings';
+import { User } from '../../db';
+import { UserTypes } from '../../common/Mappings';
+import { Op } from 'sequelize';
 
 const users = Router();
 
@@ -217,7 +218,9 @@ users.get('/user/:email/orgs', async (req, res, next) => {
       where: {
         deleted: false,
         email,
-        user_type: UserTypes.ORGANIZATION_USER
+        user_type:  {
+          [Op.in]: [UserTypes.ORGANIZATION_USER, UserTypes.ORGANIZATION_ADMIN]
+        }
       },
       include: [...User.getMinimalInclude()]
     });
