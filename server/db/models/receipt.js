@@ -2,7 +2,8 @@
 
 const { database } = require('../../config');
 module.exports = (sequelize, DataTypes) => {
-  const Receipt = sequelize.define(
+  const { models: _models } = sequelize,
+   Receipt = sequelize.define(
     'Receipt',
     {
       id: {
@@ -11,36 +12,39 @@ module.exports = (sequelize, DataTypes) => {
         autoIncrement: true,
         allowNull: false
       },
+      user_id: {
+        type: DataTypes.INTEGER
+      },
+      org_id: {
+        type: DataTypes.INTEGER
+      },
       company_name: { 
-        type: DataTypes.STRING,
-        allowNull: false
+        type: DataTypes.STRING
       },
       receipt_file_id: { 
         type: DataTypes.INTEGER
       },
       invoice_date: { 
         type: DataTypes.DATE,
-        allowNull: false
       },
       receipt_number: { 
         type: DataTypes.STRING
       },
       company_payment: { 
-        type: DataTypes.BOOLEAN,
-        defaultValue: false
+        type: DataTypes.BOOLEAN
       },
       note: { 
         type: DataTypes.TEXT
       },
-      category_id: { 
-        type: DataTypes.INTEGER,
+      category: { 
+        type: DataTypes.STRING,
         allowNull: false
       },
       lifelong_warranty: { 
         type: DataTypes.BOOLEAN
       },
-      warranty_unit_id: { 
-        type: DataTypes.INTEGER
+      warranty_unit: { 
+        type: DataTypes.STRING
       },
       warranty_value: { 
         type: DataTypes.INTEGER
@@ -48,15 +52,14 @@ module.exports = (sequelize, DataTypes) => {
       unlimited_return: { 
         type: DataTypes.BOOLEAN
       },
-      return_unit_id: { 
-        type: DataTypes.INTEGER
+      return_unit: { 
+        type: DataTypes.STRING
       },
       return_value: { 
         type: DataTypes.INTEGER
       },
-      paid_with_id: { 
-        type: DataTypes.INTEGER,
-        allowNull: false
+      paid_with: { 
+        type: DataTypes.STRING
       },
       created_by: {
         type: DataTypes.INTEGER,
@@ -95,44 +98,51 @@ module.exports = (sequelize, DataTypes) => {
 
   Receipt.getStandardInclude = ({ condition } = {}) => [
     {
-      where: { deleted: false },
-      required: true,
-      association: _models.Receipt.Client
-    },
-    {
-      where: { deleted: false },
-      required: true,
-      association: _models.Receipt.AccountOwners
-    },
-    {
-      where: { deleted: false },
-      required: true,
-      association: _models.Receipt.AccountBalance
-    },
-    {
-      where: { deleted: false },
       required: false,
-      association: _models.ClientAccount.ClientProperty
+      association: _models.Receipt.ReceiptCategory
     },
     {
-      where: { deleted: false },
       required: false,
-      association: _models.ClientAccount.ConnectedFinancialAccount,
-      include: [..._models.ClientPlaidFinancialAccount.getMinimalInclude()]
+      association: _models.Receipt.PaymentType
+    },
+    {
+      required: false,
+      association: _models.Receipt.Warranty
+    },
+    {
+      required: false,
+      association: _models.Receipt.Return
+    },
+    {
+      where: {deleted: false},
+      required: false,
+      association: _models.Receipt.ReceiptAmounts
     }
   ];
 
   Receipt.associate = function(models) {
     Receipt.ReceiptCategory = Receipt.belongsTo(models.ReceiptCategory, {
       as: 'receipt_category',
-      targetKey: 'id',
-      foreignKey: { name: 'category_id', allowNull: false }
+      targetKey: 'value',
+      foreignKey: { name: 'category', allowNull: false }
     });
 
     Receipt.PaymentType = Receipt.belongsTo(models.PaymentType, {
       as: 'payment_type',
-      targetKey: 'id',
-      foreignKey: { name: 'paid_with_id', allowNull: false }
+      targetKey: 'value',
+      foreignKey: { name: 'paid_with', allowNull: false }
+    });
+
+    Receipt.Warranty = Receipt.belongsTo(models.DurationUnit, {
+      as: 'warranty',
+      targetKey: 'value',
+      foreignKey: { name: 'warranty_unit', allowNull: false }
+    });
+
+    Receipt.Return = Receipt.belongsTo(models.DurationUnit, {
+      as: 'return',
+      targetKey: 'value',
+      foreignKey: { name: 'return_unit', allowNull: false }
     });
 
     Receipt.ReceiptAmounts = Receipt.hasMany(models.ReceiptAmount, {

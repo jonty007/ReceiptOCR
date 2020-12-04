@@ -41,5 +41,6 @@
   "DEVICE_ADDED": "Device added!",
   "DEVICE_404": "Device not found!",
   "DEVICE_203": "Device removed!",
-  "USER_EXIST_ORG": "User already exist in your organization"
+  "USER_EXIST_ORG": "User already exist in your organization",
+  "UPLOAD.SUCCESSFUL": "Receipt uploaded successfully"
 }
