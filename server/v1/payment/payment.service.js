@@ -6,10 +6,9 @@ import { logger } from '../../app/app.logger';
 import { client } from '../../boundaries/stripe';
 import { createLink } from '../../boundaries/firebase';
 
-
 async function createStripeCustomer(email, user_details) {
   console.log(client);
-  let customer_details = await client.customers.create({ 
+  let customer_details = await client.customers.create({
     email: email,
     name: user_details.first_name + ' ' + user_details.last_name
   });
@@ -120,8 +119,8 @@ export async function createPayment(payment_details, transaction) {
         data: { email: user_details.email },
         exp: defaultTimeToExpire
       });
-    
-      console.log('token: ', encodeEmail);
+
+    console.log('token: ', encodeEmail);
 
     if (user_details.status === UserStatus.PAYMENT_PENDING) {
       let data = await createLink('verifyAccount', encodeEmail);

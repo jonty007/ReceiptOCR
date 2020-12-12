@@ -30,4 +30,4 @@ export const StorageType = {
 
 export const FileContainers = {
   ATBR: 'atbr'
-}
+};

@@ -2,7 +2,7 @@ const emailService = require('../common/services/email/email_service'),
   stripeService = require('../boundaries/stripe'),
   s3Boundary = require('../boundaries/s3'),
   azureStorage = require('../boundaries/azure_storage'),
-  firebaseBoundary = require("../boundaries/firebase");
+  firebaseBoundary = require('../boundaries/firebase');
 // socketBoundary = require('../boundaries/socket');
 
 /**

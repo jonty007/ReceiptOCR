@@ -41,7 +41,8 @@ export async function createOrganization(data, user, transaction) {
 
 export async function addOrgCode(data, user, transaction) {
   try {
-    let {org_id, org_code} = data, { user_id } = user;
+    let { org_id, org_code } = data,
+      { user_id } = user;
 
     await Organization.update(
       {

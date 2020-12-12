@@ -11,7 +11,7 @@ import { decryptRead, encryptUpload } from '../../boundaries/s3';
 
 const azureStorage = require('../../boundaries/azure_storage');
 
-const file = Router();
+const fileRouter = Router();
 
 const streamErrorHandler = res => err => {
   err.message = `ScaleStream : ${err.message}`;
@@ -39,7 +39,7 @@ const streamErrorHandler = res => err => {
  * @apiError (Error 400) ValidationError Validation failed!
  *
  */
-file.post('/file/s3/upload', isAuthenticated(), async (req, res, next) => {
+fileRouter.post('/file/s3/upload', isAuthenticated(), async (req, res, next) => {
   const { user_id } = req.user,
     { file_name } = req.query;
 
@@ -135,7 +135,7 @@ file.post('/file/s3/upload', isAuthenticated(), async (req, res, next) => {
  * @apiError (Error 400) ValidationError Validation failed!
  * @apiError (Error 404) NotFoundError File not found!
  */
-file.get('/file/s3/:fileName', isAuthenticated(), async (req, res, next) => {
+fileRouter.get('/file/s3/:fileName', isAuthenticated(), async (req, res, next) => {
   const { size } = req.query,
     { fileName } = req.params;
 
@@ -221,7 +221,7 @@ file.get('/file/s3/:fileName', isAuthenticated(), async (req, res, next) => {
  * @apiError (Error 400) ValidationError Validation failed!
  *
  */
-file.post('/file/upload', isAuthenticated(), async (req, res, next) => {
+fileRouter.post('/file/upload', isAuthenticated(), async (req, res, next) => {
   try {
     const { user_id } = req.user;
     let fileObj = {};
@@ -296,7 +296,7 @@ file.post('/file/upload', isAuthenticated(), async (req, res, next) => {
  * @apiError (Error 400) ValidationError Validation failed!
  * @apiError (Error 404) NotFoundError File not found!
  */
-file.get('/file/:file_id', isAuthenticated(), async (req, res, next) => {
+fileRouter.get('/file/:file_id', isAuthenticated(), async (req, res, next) => {
   try {
     let { file_id } = req.params;
     if (!file_id) {
@@ -376,7 +376,7 @@ file.get('/file/:file_id', isAuthenticated(), async (req, res, next) => {
  * @apiError (Error 400) ValidationError Validation failed!
  *
  */
-file.post('/file/azure/upload', isAuthenticated(), async (req, res, next) => {
+fileRouter.post('/file/azure/upload', isAuthenticated(), async (req, res, next) => {
   try {
     const busboy = new Busboy({ headers: req.headers });
     busboy.on('file', (fieldname, fileData, filename, encoding, mime_type) => {
@@ -454,7 +454,7 @@ file.post('/file/azure/upload', isAuthenticated(), async (req, res, next) => {
  * @apiError (Error 400) ValidationError Validation failed!
  * @apiError (Error 404) NotFoundError File not found!
  */
-file.get('/file/azure/:file_name', async (req, res, next) => {
+fileRouter.get('/file/azure/:file_name', async (req, res, next) => {
   try {
     let { file_name } = req.params;
     if (!file_name) {
@@ -478,7 +478,6 @@ file.get('/file/azure/:file_name', async (req, res, next) => {
   }
 });
 
-
 /**
  *
  * @api {post} /file/profile-picture/update Upload a file to local
@@ -498,7 +497,7 @@ file.get('/file/azure/:file_name', async (req, res, next) => {
  * @apiError (Error 400) ValidationError Validation failed!
  *
  */
-file.post('/file/profile-picture/update', isAuthenticated(), async (req, res, next) => {
+fileRouter.post('/file/profile-picture/update', isAuthenticated(), async (req, res, next) => {
   try {
     const { user_id } = req.user;
     let fileObj = {};
@@ -517,7 +516,7 @@ file.post('/file/profile-picture/update', isAuthenticated(), async (req, res, ne
       });
 
       fileData.on('end', async data => {
-        let  user = await User.findOne({
+        let user = await User.findOne({
           where: {
             id: user_id
           }
@@ -550,14 +549,17 @@ file.post('/file/profile-picture/update', isAuthenticated(), async (req, res, ne
         } else {
           await sequelize.transaction(async transaction => {
             let { id: file_id, name } = await File.create(file_instance, { transaction });
-            await User.update({
-              profile_picture_file_id: file_id
-            }, {
-              where: {
-                id: user_id
+            await User.update(
+              {
+                profile_picture_file_id: file_id
               },
-              transaction
-            });
+              {
+                where: {
+                  id: user_id
+                },
+                transaction
+              }
+            );
 
             fileObj = {
               file_id,
@@ -582,7 +584,7 @@ file.post('/file/profile-picture/update', isAuthenticated(), async (req, res, ne
 });
 
 // get profile picture
-file.get('/file/profile-picture/:file_id', isAuthenticated(), async (req, res, next) => {
+fileRouter.get('/file/profile-picture/:file_id', isAuthenticated(), async (req, res, next) => {
   try {
     let { file_id } = req.params;
     if (!file_id) {
@@ -611,10 +613,6 @@ file.get('/file/profile-picture/:file_id', isAuthenticated(), async (req, res, n
   }
 });
 
-
-
-
-
 // company logo
 
 /**
@@ -636,7 +634,7 @@ file.get('/file/profile-picture/:file_id', isAuthenticated(), async (req, res, n
  * @apiError (Error 400) ValidationError Validation failed!
  *
  */
-file.post('/file/company-logo/update', isAuthenticated(), async (req, res, next) => {
+fileRouter.post('/file/company-logo/update', isAuthenticated(), async (req, res, next) => {
   try {
     const { user_id } = req.user;
     let fileObj = {};
@@ -655,7 +653,7 @@ file.post('/file/company-logo/update', isAuthenticated(), async (req, res, next)
       });
 
       fileData.on('end', async data => {
-        let  user = await User.findOne({
+        let user = await User.findOne({
           where: {
             id: user_id
           },
@@ -688,14 +686,17 @@ file.post('/file/company-logo/update', isAuthenticated(), async (req, res, next)
         } else if (user.org) {
           await sequelize.transaction(async transaction => {
             let { id: file_id, name } = await File.create(file_instance, { transaction });
-            await Organization.update({
-              company_logo_file_id: file_id
-            }, {
-              where: {
-                id: user.org.id
+            await Organization.update(
+              {
+                company_logo_file_id: file_id
               },
-              transaction
-            });
+              {
+                where: {
+                  id: user.org.id
+                },
+                transaction
+              }
+            );
 
             fileObj = {
               file_id,
@@ -724,7 +725,7 @@ file.post('/file/company-logo/update', isAuthenticated(), async (req, res, next)
 });
 
 // get profile picture
-file.get('/file/company-logo/:file_id', isAuthenticated(), async (req, res, next) => {
+fileRouter.get('/file/company-logo/:file_id', isAuthenticated(), async (req, res, next) => {
   try {
     let { file_id } = req.params;
     if (!file_id) {
@@ -753,4 +754,4 @@ file.get('/file/company-logo/:file_id', isAuthenticated(), async (req, res, next
   }
 });
 
-export default file;
+export default fileRouter;

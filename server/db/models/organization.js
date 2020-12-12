@@ -39,23 +39,23 @@ module.exports = (sequelize, DataTypes) => {
         },
         street: {
           type: DataTypes.STRING
-        }, 
-        zip:  {
+        },
+        zip: {
           type: DataTypes.STRING
-        }, 
+        },
         city: {
           type: DataTypes.STRING
-        }, 
+        },
         country: {
           type: DataTypes.STRING
-        }, 
+        },
         vat_number: {
           type: DataTypes.STRING
         },
-        contact_person_name:  {
+        contact_person_name: {
           type: DataTypes.STRING
         },
-        contact_person_phone:  {
+        contact_person_phone: {
           type: DataTypes.STRING
         },
         is_active: {

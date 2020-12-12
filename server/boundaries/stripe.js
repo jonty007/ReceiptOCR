@@ -15,6 +15,4 @@ const init = function(conf) {
   }
 };
 
-export {
-  init
-};
+export { init };

@@ -80,7 +80,7 @@ auth.post('/auth/sign-up', async (req, res, next) => {
     if (password !== confirm_password) {
       return res.status(400).send({ message: 'PASSWORD_NO_MATCH' });
     }
-    if ((UserTypes.ORGANIZATION_ADMIN === user_type) && !organization) {
+    if (UserTypes.ORGANIZATION_ADMIN === user_type && !organization) {
       return res.status(400).send({ message: 'ORG_MANDATORY' });
     }
     let user;
@@ -158,7 +158,6 @@ auth.post('/auth/verify-user', async (req, res, next) => {
     } catch (error) {
       return res.status(400).send({ message: 'LINK_EXPIRED' });
     }
-    console.log('decodedObj: ', decodedObj);
 
     if (!decodedObj.email) {
       return res.status(400).send({
@@ -166,7 +165,8 @@ auth.post('/auth/verify-user', async (req, res, next) => {
       });
     }
 
-    let user = null, org;
+    let user = null,
+      org;
 
     if (decodedObj.org_id && decodedObj.org_user) {
       // verification for org users
@@ -183,7 +183,7 @@ auth.post('/auth/verify-user', async (req, res, next) => {
       user = await User.findOne({
         where: {
           email: decodedObj.email,
-          user_type: {[Op.ne]: UserTypes.ORGANIZATION_USER},
+          user_type: { [Op.ne]: UserTypes.ORGANIZATION_USER },
           deleted: false
         },
         include: [...User.getPasswordInclude()]
@@ -348,7 +348,7 @@ auth.post('/auth/login', async (req, res, next) => {
     if (!user) {
       return res.status(400).send({ message: 'LOGIN_ERROR' });
     }
-    
+
     if (UserStatus.PAYMENT_PENDING === user.status) {
       return res.status(400).send({ message: 'PAYMENT_PENDING' });
     }
@@ -462,7 +462,6 @@ auth.post('/auth/forgot-password', async (req, res, next) => {
       });
 
       user = await User.findOne({ where: { email, org_id: org.id, deleted: false } });
-
     } else {
       user = await User.findOne({ where: { email, deleted: false } });
     }
@@ -486,7 +485,7 @@ auth.post('/auth/forgot-password', async (req, res, next) => {
       data: { id: user.id },
       exp: defaultTimeToExpire
     });
-    
+
     let data = await createLink('resetPassword', encodeUserId);
     forgotEmail
       .send({
@@ -684,7 +683,6 @@ auth.post('/auth/create-password', async (req, res, next) => {
     }
 
     let user = null;
-    console.log("decoded obj: ", decodedObj);
     if (decodedObj.org_id && decodedObj.org_user) {
       // verification for org users
       user = await User.findOne({
@@ -700,7 +698,7 @@ auth.post('/auth/create-password', async (req, res, next) => {
       user = await User.findOne({
         where: {
           email: decodedObj.email,
-          user_type: {[Op.ne]: UserTypes.ORGANIZATION_USER},
+          user_type: { [Op.ne]: UserTypes.ORGANIZATION_USER },
           deleted: false
         },
         include: [...User.getPasswordInclude()]
@@ -790,7 +788,7 @@ auth.post('/auth/create-password', async (req, res, next) => {
  */
 auth.post('/auth/resend-verification-link', async (req, res, next) => {
   try {
-    const { email, org_code } = req.body;
+    const { email } = req.body;
 
     if (!email) {
       return res.status(400).send({
@@ -801,7 +799,7 @@ auth.post('/auth/resend-verification-link', async (req, res, next) => {
     let user = await User.findOne({
       where: {
         email,
-        user_type: {[Op.ne]: UserTypes.ORGANIZATION_USER},
+        user_type: { [Op.ne]: UserTypes.ORGANIZATION_USER },
         deleted: false
       },
       include: [...User.getStandardInclude()]

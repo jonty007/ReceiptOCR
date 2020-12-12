@@ -31,7 +31,6 @@ payment.get('/payment/plans', async (req, res, next) => {
   }
 });
 
-
 /**
  * @api {get} /payment/:id  Find payment details by payment id
  * @apiName FindPayment

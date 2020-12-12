@@ -213,23 +213,21 @@ users.get('/user/all', isAuthenticated(), async (req, res, next) => {
 users.get('/user/:email/orgs', async (req, res, next) => {
   try {
     let { email } = req.params;
-    console.log(email);
-    let users = await User.findAndCountAll({
+    let usersList = await User.findAndCountAll({
       where: {
         deleted: false,
         email,
-        user_type:  {
+        user_type: {
           [Op.in]: [UserTypes.ORGANIZATION_USER, UserTypes.ORGANIZATION_ADMIN]
         }
       },
       include: [...User.getMinimalInclude()]
     });
 
-    console.log(users);
     let orgs = [];
-    if (users.rows) {
-      users.rows.forEach(user => {
-        if(user.org) {
+    if (usersList.rows) {
+      usersList.rows.forEach(user => {
+        if (user.org) {
           orgs.push(user.org);
         }
       });
@@ -244,5 +242,5 @@ users.get('/user/:email/orgs', async (req, res, next) => {
     }
     return next(e);
   }
-})
+});
 export default users;

@@ -8,7 +8,6 @@ const client = new vision.ImageAnnotatorClient();
 const ocr = Router();
 
 ocr.post('/ocr/receipt', async (req, res, next) => {
-  
   try {
     console.log(req.body);
     const busboy = new Busboy({ headers: req.headers });
@@ -22,11 +21,13 @@ ocr.post('/ocr/receipt', async (req, res, next) => {
 
       let buffer = '';
       file.setEncoding('base64');
-      file.on('data', function(data) {
-        buffer += data;
-      }).on('end', function() {
-        base64data.push(buffer);
-      });
+      file
+        .on('data', function(data) {
+          buffer += data;
+        })
+        .on('end', function() {
+          base64data.push(buffer);
+        });
 
       extractedText = await parse_receipt();
       return res.send({
@@ -56,4 +57,3 @@ ocr.post('/ocr/receipt', async (req, res, next) => {
 });
 
 export default ocr;
-

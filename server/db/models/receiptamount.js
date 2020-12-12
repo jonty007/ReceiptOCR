@@ -15,17 +15,17 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false
       },
-      tax_percentage: { 
-        type: DataTypes.FLOAT 
+      tax_percentage: {
+        type: DataTypes.FLOAT
       },
-      net: { 
-        type: DataTypes.FLOAT 
+      net: {
+        type: DataTypes.FLOAT
       },
-      tax: { 
-        type: DataTypes.FLOAT 
+      tax: {
+        type: DataTypes.FLOAT
       },
-      sum: { 
-        type: DataTypes.FLOAT 
+      sum: {
+        type: DataTypes.FLOAT
       },
       created_by: {
         type: DataTypes.INTEGER,

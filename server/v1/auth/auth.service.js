@@ -20,7 +20,7 @@ export async function signUpUser(data, transaction) {
     const user = await User.findOne({
       where: {
         email,
-        user_type: {[Op.ne]: UserTypes.ORGANIZATION_USER},
+        user_type: { [Op.ne]: UserTypes.ORGANIZATION_USER },
         deleted: false
       }
     });
@@ -85,7 +85,11 @@ export async function signUpUser(data, transaction) {
       while (org_code.length < 6) {
         org_code = '0' + org_code;
       }
-      await addOrgCode({org_id: org_id, org_code: org_code}, { user_id: user_json.id }, transaction);
+      await addOrgCode(
+        { org_id: org_id, org_code: org_code },
+        { user_id: user_json.id },
+        transaction
+      );
 
       dataForToken.org_name = org_details.org_details.name;
     }
@@ -118,14 +122,14 @@ export async function signUpUser(data, transaction) {
           data: dataForToken,
           exp: defaultTimeToExpire
         });
-      let data = await createLink('verifyAccount', encodeEmail);
+      let link = await createLink('verifyAccount', encodeEmail);
       await verifyNewUser.send({
         to: email,
         use_alias: true,
         subject_params: {},
         content_params: {
           name: `${first_name} ${last_name}`,
-          invitation_token: data.shortLink
+          invitation_token: link.shortLink
         }
       });
     }

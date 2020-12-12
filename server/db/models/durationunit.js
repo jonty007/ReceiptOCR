@@ -11,14 +11,14 @@ module.exports = (sequelize, DataTypes) => {
         autoIncrement: true,
         allowNull: false
       },
-      label: { 
-        type: DataTypes.STRING 
+      label: {
+        type: DataTypes.STRING
       },
-      value: { 
-        type: DataTypes.STRING 
+      value: {
+        type: DataTypes.STRING
       },
-      sequence: { 
-        type: DataTypes.INTEGER 
+      sequence: {
+        type: DataTypes.INTEGER
       },
       created_by: {
         type: DataTypes.INTEGER,
