@@ -3,20 +3,94 @@ import { Receipt, User, File, ReceiptAmount, sequelize } from '../../db';
 import Busboy from 'busboy';
 import { isAuthenticated } from '../../middlewares';
 import { StorageType, FileContainers } from '../../common/Mappings';
+import { Op } from 'sequelize';
+import Sequelize from 'sequelize';
 const azureStorage = require('../../boundaries/azure_storage');
+const azureOCR = require('../../boundaries/azure_ocr');
 
 const receiptRouter = Router();
+
+// company name
+// date range (single function)
+// receipt number
+// company payment true  or false
+// category
+// warranty unit
+// return unit
+// paid with
 
 receiptRouter.get('/receipt/user', isAuthenticated(), async (req, res, next) => {
   try {
     const { user_id } = req.user;
-    const receipts = await Receipt.findAll({
+
+    const {
+      company_name,
+      invoice_date_start,
+      invoice_date_end,
+      receipt_number,
+      company_payment,
+      category,
+      warranty_unit,
+      return_unit,
+      paid_with
+    } = req.query;
+
+    let receipts = await Receipt.findAll({
       where: {
         user_id: user_id,
         deleted: false
       },
       include: [...Receipt.getStandardInclude()]
     });
+
+    if (company_name) {
+      receipts = receipts.filter(receipt => {
+        return receipt.company_name.toLowerCase().indexOf(company_name.toLocaleLowerCase()) > -1;
+      });
+    }
+    if (invoice_date_start) {
+      // implement
+    }
+
+    if (invoice_date_end) {
+      // implement
+    }
+
+    if (receipt_number) {
+      receipts = receipts.filter(receipt => {
+        return receipt.receipt_number.toLowerCase().indexOf(receipt_number.toLocaleLowerCase()) > -1;
+      });
+    }
+  
+    if (typeof company_payment === "boolean") {
+      receipts = receipts.filter(receipt => {
+        return receipt.company_payment === company_payment;
+      });
+    }
+
+    if (category) {
+      receipts = receipts.filter(receipt => {
+        return receipt.category.toLowerCase().indexOf(category.toLocaleLowerCase()) > -1;
+      });
+    }
+
+    if (warranty_unit) {
+      receipts = receipts.filter(receipt => {
+        return receipt.warranty_unit.toLowerCase().indexOf(warranty_unit.toLocaleLowerCase()) > -1;
+      });
+    }
+
+    if (return_unit) {
+      receipts = receipts.filter(receipt => {
+        return receipt.return_unit.toLowerCase().indexOf(return_unit.toLocaleLowerCase()) > -1;
+      });
+    }
+
+    if (paid_with) {
+      receipts = receipts.filter(receipt => {
+        return receipt.paid_with.toLowerCase().indexOf(paid_with.toLocaleLowerCase()) > -1;
+      });
+    }
 
     return res.send({ message: 'UPLOAD.SUCCESSFUL', data: receipts });
   } catch (e) {
@@ -157,6 +231,32 @@ receiptRouter.get(
     }
   }
 );
+
+receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
+  try {
+    const busboy = new Busboy({ headers: req.headers });
+    const { user_id } = req.user;
+
+    busboy.on('file', async (fieldName, file, filename, encoding, mime_type) => {
+      if (!mime_type || !filename) {
+        return res.status(400).send({ message: 'VAL_FAILED' });
+      }
+
+      console.log(`typeof file ${typeof file}`);
+
+      await azureOCR.extractReceipt(file);
+      res.send({ done: 'hello' });
+    });
+
+    return req.pipe(busboy);
+  } catch (e) {
+    if (e.message) {
+      return res.status(405).send({
+        message: e.message
+      });
+    }
+  }
+});
 
 receiptRouter.post('/receipt', isAuthenticated(), async (req, res, next) => {
   try {

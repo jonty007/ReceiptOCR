@@ -97,6 +97,10 @@ module.exports = {
     },
     baseGraphURL: 'https://graph.microsoft.com',
     userInfo: '/v1.0/me',
+    recognizer: {
+      endpoint: 'https://preceiptocrdev.cognitiveservices.azure.com/',
+      key: '59a64e59ea9b458c95025a3017faa84f'
+    },
     storage: {
       baseURL: 'https://pdocs.blob.core.windows.net',
       accountName: 'pdocs',
