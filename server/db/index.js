@@ -11,7 +11,7 @@ function setupModels(sequelize) {
   readdirSync(models_path)
     .filter(file => file.indexOf('.') !== 0 && file.slice(-3) === '.js')
     .forEach(file => {
-      const model = require(join(models_path, file))(sequelize, Sequelize.DataTypes);
+      const model = sequelize.import(join(models_path, file));
       // Define Capital case table name & schema
       model.tableName = pluralize(model.name);
 
@@ -39,8 +39,8 @@ db.init = ({
   pool,
   logging,
   operatorsAliases,
-  dialectOptions,
-  define
+  define,
+  dialectOptions
 } = {}) => {
   if (db.sequelize) {
     return db.sequelize;
@@ -54,12 +54,12 @@ db.init = ({
       pool,
       logging,
       operatorsAliases,
-      dialectOptions,
-      define
+      define,
+      dialectOptions
     },
     sequelize = new Sequelize(database, username, password, sequelize_config);
 
-  setupModels(sequelize);
+  setupModels(sequelize, Sequelize);
 
   db.sequelize = sequelize;
 
