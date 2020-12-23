@@ -366,7 +366,8 @@ organization.get('/organization/:org_id/users', isAuthenticated(), async (req, r
         where: {
           org_id,
           deleted: false
-        }
+        },
+        include: [...User.getMinimalInclude()]
       });
 
     let [organizationRec, users] = await Promise.all([organizationDb, usersDb]);

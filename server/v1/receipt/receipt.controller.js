@@ -58,11 +58,13 @@ receiptRouter.get('/receipt/user', isAuthenticated(), async (req, res, next) => 
 
     if (receipt_number) {
       receipts = receipts.filter(receipt => {
-        return receipt.receipt_number.toLowerCase().indexOf(receipt_number.toLocaleLowerCase()) > -1;
+        return (
+          receipt.receipt_number.toLowerCase().indexOf(receipt_number.toLocaleLowerCase()) > -1
+        );
       });
     }
-  
-    if (typeof company_payment === "boolean") {
+
+    if (typeof company_payment === 'boolean') {
       receipts = receipts.filter(receipt => {
         return receipt.company_payment === company_payment;
       });
@@ -266,91 +268,109 @@ receiptRouter.post('/receipt', isAuthenticated(), async (req, res, next) => {
     let formData = {};
 
     busboy.on('file', async (fieldName, file, filename, encoding, mime_type) => {
-      if (!mime_type || !filename) {
-        return res.status(400).send({ message: 'VAL_FAILED' });
-      }
+      try {
+        if (!mime_type || !filename) {
+          return res.status(400).send({ message: 'VAL_FAILED' });
+        }
 
-      let content = [],
-        fileContent;
+        let content = [],
+          fileContent;
 
-      file.on('data', data => {
-        content.push(data);
-      });
-
-      file.on('end', async () => {
-        fileContent = Buffer.concat(content);
-
-        let fileData;
-
-        let user = await User.findOne({
-          where: {
-            id: user_id,
-            deleted: false
-          }
+        file.on('data', data => {
+          content.push(data);
         });
 
-        await sequelize.transaction(async transaction => {
-          const params = {
-            name: filename,
-            extension: encoding,
-            file_size: 0,
-            mime_type: mime_type,
-            location: FileContainers.ATBR,
-            storage_type: StorageType.AZURE,
-            created_by: actual_user_id,
-            modified_by: actual_user_id
-          };
+        file.on('end', async () => {
+          try {
+            fileContent = Buffer.concat(content);
 
-          fileData = await File.create(params, { transaction });
-          const fileName = fileData.id + '_' + fileData.name;
-          await azureStorage.uploadBlob(fileName, fileContent);
-          const receiptParams = {
-            user_id: user_id,
-            org_id: user.org_id,
-            company_name: formData['company_name'],
-            receipt_file_id: fileData.id,
-            invoice_date: formData['invoice_date'],
-            receipt_number: formData['receipt_number'],
-            company_payment: formData['company_payment'],
-            note: formData['note'],
-            category: formData['category'],
-            lifelong_warranty: formData['lifelong_warranty'],
-            warranty_unit: formData['warranty_unit'],
-            warranty_value: formData['warranty_value'],
-            unlimited_return: formData['unlimited_return'],
-            return_unit: formData['return_unit'],
-            return_value: formData['return_value'],
-            paid_with: formData['paid_with'],
-            modified_by: actual_user_id,
-            created_by: actual_user_id
-          };
+            let fileData;
 
-          const receipt = await Receipt.create(receiptParams, { transaction });
+            let user = await User.findOne({
+              where: {
+                id: user_id,
+                deleted: false
+              }
+            });
 
-          let amounts = formData['amounts'];
-          if (amounts) {
-            amounts = JSON.parse(amounts);
+            await sequelize.transaction(async transaction => {
+              const params = {
+                name: filename,
+                extension: encoding,
+                file_size: 0,
+                mime_type: mime_type,
+                location: FileContainers.ATBR,
+                storage_type: StorageType.AZURE,
+                created_by: actual_user_id,
+                modified_by: actual_user_id
+              };
 
-            if (amounts.length) {
-              let updatePromises = [];
-              amounts.forEach(amount => {
-                let amountParam = {
-                  receipt_id: receipt.id,
-                  tax_percentage: amount.tax_percentage,
-                  net: amount.net,
-                  tax: amount.tax,
-                  sum: amount.sum,
-                  created_by: actual_user_id,
-                  modified_by: actual_user_id
-                };
-                updatePromises.push(ReceiptAmount.create(amountParam, { transaction }));
+              fileData = await File.create(params, { transaction });
+              const fileName = fileData.id + '_' + fileData.name;
+              await azureStorage.uploadBlob(fileName, fileContent);
+              const receiptParams = {
+                user_id: user_id,
+                org_id: user.org_id,
+                company_name: formData['company_name'],
+                receipt_file_id: fileData.id,
+                invoice_date: formData['invoice_date'],
+                receipt_number: formData['receipt_number'],
+                company_payment: formData['company_payment'],
+                note: formData['note'],
+                category: formData['category'],
+                lifelong_warranty: formData['lifelong_warranty'],
+                warranty_unit: formData['warranty_unit'],
+                warranty_value: formData['warranty_value'],
+                unlimited_return: formData['unlimited_return'],
+                return_unit: formData['return_unit'],
+                return_value: formData['return_value'],
+                paid_with: formData['paid_with'],
+                modified_by: actual_user_id,
+                created_by: actual_user_id
+              };
+
+              const receipt = await Receipt.create(receiptParams, { transaction });
+
+              let amounts = formData['amounts'];
+              if (amounts) {
+                amounts = JSON.parse(amounts);
+
+                if (amounts.length) {
+                  let updatePromises = [];
+                  amounts.forEach(amount => {
+                    let amountParam = {
+                      receipt_id: receipt.id,
+                      tax_percentage: amount.tax_percentage,
+                      net: amount.net,
+                      tax: amount.tax,
+                      sum: amount.sum,
+                      created_by: actual_user_id,
+                      modified_by: actual_user_id
+                    };
+                    updatePromises.push(ReceiptAmount.create(amountParam, { transaction }));
+                  });
+                  await Promise.all(updatePromises);
+                }
+              }
+              return res.send({ message: 'UPLOAD.SUCCESSFUL', data: receipt });
+            });
+          } catch (e) {
+            if (e.message) {
+              return res.status(405).send({
+                message: e.message
               });
-              await Promise.all(updatePromises);
             }
+            return next(e);
           }
-          return res.send({ message: 'UPLOAD.SUCCESSFUL', data: receipt });
         });
-      });
+      } catch (e) {
+        if (e.message) {
+          return res.status(405).send({
+            message: e.message
+          });
+        }
+        return next(e);
+      }
     });
 
     busboy.on('field', (fieldName, value) => {
