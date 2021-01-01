@@ -234,6 +234,35 @@ receiptRouter.get(
   }
 );
 
+receiptRouter.post('/receiptqr', isAuthenticated(), async (req, res, next) => {
+  try {
+    const busboy = new Busboy({ headers: req.headers });
+    const { user_id } = req.user;
+
+    busboy.on('file', async (fieldName, file, filename, encoding, mime_type) => {
+      if (!mime_type || !filename) {
+        return res.status(400).send({ message: 'VAL_FAILED' });
+      }
+
+      // console.log(`typeof file ${typeof file}`);
+
+      // await azureOCR.extractReceipt(file);
+      let data = {
+        message: 'send this data object in receipt OCR form as QRData'
+      };
+      res.send({ data });
+    });
+
+    return req.pipe(busboy);
+  } catch (e) {
+    if (e.message) {
+      return res.status(405).send({
+        message: e.message
+      });
+    }
+  }
+});
+
 receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
   try {
     const busboy = new Busboy({ headers: req.headers });
@@ -247,7 +276,16 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
       console.log(`typeof file ${typeof file}`);
 
       await azureOCR.extractReceipt(file);
-      res.send({ done: 'hello' });
+      let data = {
+        receipt_number: null,
+        receipt_date: '12/29/2020',
+        company_name: 'Starbucks',
+        tax_details: [
+          { tax_percentage: 10, net: 19.49, tax: 1.95, sum: 21.44 },
+          { tax_percentage: 20, net: 19.49, tax: 3.9, sum: 23.39 }
+        ]
+      };
+      res.send({ data });
     });
 
     return req.pipe(busboy);
@@ -308,6 +346,159 @@ receiptRouter.post('/receipt', isAuthenticated(), async (req, res, next) => {
               fileData = await File.create(params, { transaction });
               const fileName = fileData.id + '_' + fileData.name;
               await azureStorage.uploadBlob(fileName, fileContent);
+
+              let tax_sum = 0;
+              let amounts = formData['amounts'];
+              if (amounts) {
+                amounts = JSON.parse(amounts);
+                if (amounts.length) {
+                  amounts.forEach(amount => {
+                    tax_sum += amount.sum;
+                  });
+                }
+              }
+
+              const receiptParams = {
+                user_id: user_id,
+                org_id: user.org_id,
+                company_name: formData['company_name'],
+                tax_sum,
+                receipt_file_id: fileData.id,
+                invoice_date: formData['invoice_date'],
+                receipt_number: formData['receipt_number'],
+                company_payment: formData['company_payment'],
+                note: formData['note'],
+                category: formData['category'],
+                lifelong_warranty: formData['lifelong_warranty'],
+                warranty_unit: formData['warranty_unit'],
+                warranty_value: formData['warranty_value'],
+                unlimited_return: formData['unlimited_return'],
+                return_unit: formData['return_unit'],
+                return_value: formData['return_value'],
+                paid_with: formData['paid_with'],
+                modified_by: actual_user_id,
+                created_by: actual_user_id
+              };
+
+              const receipt = await Receipt.create(receiptParams, { transaction });
+
+              if (amounts && amounts.length) {
+                let updatePromises = [];
+                amounts.forEach(amount => {
+                  tax_sum += amount.sum;
+
+                  let amountParam = {
+                    receipt_id: receipt.id,
+                    tax_percentage: amount.tax_percentage,
+                    net: amount.net,
+                    tax: amount.tax,
+                    sum: amount.sum,
+                    created_by: actual_user_id,
+                    modified_by: actual_user_id
+                  };
+                  updatePromises.push(ReceiptAmount.create(amountParam, { transaction }));
+                });
+                await Promise.all(updatePromises);
+              }
+              return res.send({ message: 'UPLOAD.SUCCESSFUL', data: receipt });
+            });
+          } catch (e) {
+            if (e.message) {
+              return res.status(405).send({
+                message: e.message
+              });
+            }
+            return next(e);
+          }
+        });
+      } catch (e) {
+        if (e.message) {
+          return res.status(405).send({
+            message: e.message
+          });
+        }
+        return next(e);
+      }
+    });
+
+    busboy.on('field', (fieldName, value) => {
+      formData[fieldName] = value;
+    });
+
+    return req.pipe(busboy);
+  } catch (e) {
+    if (e.message) {
+      return res.status(405).send({
+        message: e.message
+      });
+    }
+    return next(e);
+  }
+});
+
+receiptRouter.post('/receipt/:receipt_id', isAuthenticated(), async (req, res, next) => {
+  try {
+    const busboy = new Busboy({ headers: req.headers });
+    const { user_id, actual_user_id } = req.user;
+    const { receipt_id } = req.params;
+
+    let formData = {};
+
+    const existingReceipt = await Receipt.findOne({
+      where: {
+        id: receipt_id
+      }
+    });
+
+    if (!existingReceipt) {
+      return res.status(400).send({
+        message: 'RECEIPT.UPDATE.NO_EXIST'
+      });
+    }
+
+    busboy.on('file', async (fieldName, file, filename, encoding, mime_type) => {
+      try {
+        if (!mime_type || !filename) {
+          return res.status(400).send({ message: 'VAL_FAILED' });
+        }
+
+        let content = [],
+          fileContent;
+
+        file.on('data', data => {
+          content.push(data);
+        });
+
+        file.on('end', async () => {
+          try {
+            fileContent = Buffer.concat(content);
+
+            let fileData;
+
+            let user = await User.findOne({
+              where: {
+                id: user_id,
+                deleted: false
+              }
+            });
+
+            await sequelize.transaction(async transaction => {
+              await Receipt.update({ deleted: true }, { where: { id: receipt_id }, transaction });
+
+              const params = {
+                name: filename,
+                extension: encoding,
+                file_size: 0,
+                mime_type: mime_type,
+                location: FileContainers.ATBR,
+                storage_type: StorageType.AZURE,
+                created_by: actual_user_id,
+                modified_by: actual_user_id
+              };
+
+              fileData = await File.create(params, { transaction });
+              const fileName = fileData.id + '_' + fileData.name;
+              await azureStorage.uploadBlob(fileName, fileContent);
               const receiptParams = {
                 user_id: user_id,
                 org_id: user.org_id,
@@ -352,7 +543,7 @@ receiptRouter.post('/receipt', isAuthenticated(), async (req, res, next) => {
                   await Promise.all(updatePromises);
                 }
               }
-              return res.send({ message: 'UPLOAD.SUCCESSFUL', data: receipt });
+              return res.send({ message: 'RECEIPT.UPDATE.SUCCESSFUL', data: receipt });
             });
           } catch (e) {
             if (e.message) {

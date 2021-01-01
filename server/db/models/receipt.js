@@ -18,6 +18,9 @@ module.exports = (sequelize, DataTypes) => {
         org_id: {
           type: DataTypes.INTEGER
         },
+        tax_sum: {
+          type: DataTypes.FLOAT
+        },
         company_name: {
           type: DataTypes.STRING
         },

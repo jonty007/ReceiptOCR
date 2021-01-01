@@ -40,6 +40,7 @@ npx sequelize-cli model:generate --name PaymentType --underscored true --attribu
 npx sequelize-cli model:generate --name ReceiptAmount --underscored true --attributes tax_percentage:float,net:float,tax:float,sum:float
 npx sequelize-cli model:generate --name Receipt --underscored true --attributes company_name:string,receipt_file_id:integer,invoice_date:date,receipt_number:string,company_payment:boolean,note:text,category_id:integer,lifelong_warranty:boolean,warranty_unit_id:integer,warranty_value:integer,unlimited_return:boolean,return_unit_id:integer,return_value:integer,paid_with_id:integer
 npx sequelize-cli model:generate --name DurationUnit --underscored true --attributes label:string,value:string,sequence:integer
+npx sequelize-cli migration:generate --name add-receipt-sumColumn
 
 ####################### FILES END #############################################
 
