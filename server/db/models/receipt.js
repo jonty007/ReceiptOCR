@@ -28,7 +28,7 @@ module.exports = (sequelize, DataTypes) => {
           type: DataTypes.INTEGER
         },
         invoice_date: {
-          type: DataTypes.DATE
+          type: DataTypes.DATEONLY
         },
         receipt_number: {
           type: DataTypes.STRING

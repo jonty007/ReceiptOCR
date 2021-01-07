@@ -32,7 +32,9 @@ receiptRouter.get('/receipt/user', isAuthenticated(), async (req, res, next) => 
       category,
       warranty_unit,
       return_unit,
-      paid_with
+      paid_with,
+      amount_min,
+      amount_max
     } = req.query;
 
     let receipts = await Receipt.findAll({
@@ -40,6 +42,7 @@ receiptRouter.get('/receipt/user', isAuthenticated(), async (req, res, next) => 
         user_id: user_id,
         deleted: false
       },
+      order: [['created_at', 'ASC']],
       include: [...Receipt.getStandardInclude()]
     });
 
@@ -49,12 +52,29 @@ receiptRouter.get('/receipt/user', isAuthenticated(), async (req, res, next) => 
       });
     }
     if (invoice_date_start) {
-      // implement
+      receipts = receipts.filter(receipt => {
+        return new Date(receipt.invoice_date) >= new Date(invoice_date_start);
+      });
     }
 
     if (invoice_date_end) {
-      // implement
+      receipts = receipts.filter(receipt => {
+        return new Date(receipt.invoice_date) <= new Date(invoice_date_end);
+      });
     }
+
+    if (amount_min) {
+      receipts = receipts.filter(receipt => {
+        return receipt.tax_sum >= amount_min;
+      });
+    }
+
+    if (amount_max) {
+      receipts = receipts.filter(receipt => {
+        return receipt.tax_sum <= amount_max;
+      });
+    }
+
 
     if (receipt_number) {
       receipts = receipts.filter(receipt => {
