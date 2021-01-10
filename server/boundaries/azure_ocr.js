@@ -33,52 +33,53 @@ const init = function(azure) {
   }
 
   const receipt = receipts[0];
-  console.log("First receipt:", JSON.stringify(receipt));
-  const receiptTypeField = receipt.fields["ReceiptType"];
-  if (receiptTypeField.valueType === "string") {
-    console.log(
-      `  Receipt Type: '${receiptTypeField.value || "<missing>"}', with confidence of ${
-        receiptTypeField.confidence
-      }`
-    );
-  }
-  const merchantNameField = receipt.fields["MerchantName"];
-  if (merchantNameField.valueType === "string") {
-    console.log(
-      `  Merchant Name: '${merchantNameField.value || "<missing>"}', with confidence of ${
-        merchantNameField.confidence
-      }`
-    );
-  }
-  const transactionDate = receipt.fields["TransactionDate"];
-  if (transactionDate && transactionDate.valueType === "date") {
-    console.log(
-      `  Transaction Date: '${transactionDate.value || "<missing>"}', with confidence of ${
-        transactionDate.confidence
-      }`
-    );
-  }
-  const itemsField = receipt.fields["Items"];
-  if (itemsField && itemsField.valueType === "array") {
-    for (const itemField of itemsField.value || []) {
-      if (itemField.valueType === "object") {
-        const itemNameField = itemField.value["Name"];
-        if (itemNameField && itemNameField.valueType === "string") {
-          console.log(
-            `    Item Name: '${itemNameField.value || "<missing>"}', with confidence of ${
-              itemNameField.confidence
-            }`
-          );
-        }
-      }
-    }
-  }
-  const totalField = receipt.fields["Total"];
-  if (totalField && totalField.valueType === "number") {
-    console.log(
-      `  Total: '${totalField.value || "<missing>"}', with confidence of ${totalField.confidence}`
-    );
-  }
+  return  receipt;
+
+  // const receiptTypeField = receipt.fields["ReceiptType"];
+  // if (receiptTypeField.valueType === "string") {
+  //   console.log(
+  //     `  Receipt Type: '${receiptTypeField.value || "<missing>"}', with confidence of ${
+  //       receiptTypeField.confidence
+  //     }`
+  //   );
+  // }
+  // const merchantNameField = receipt.fields["MerchantName"];
+  // if (merchantNameField.valueType === "string") {
+  //   console.log(
+  //     `  Merchant Name: '${merchantNameField.value || "<missing>"}', with confidence of ${
+  //       merchantNameField.confidence
+  //     }`
+  //   );
+  // }
+  // const transactionDate = receipt.fields["TransactionDate"];
+  // if (transactionDate && transactionDate.valueType === "date") {
+  //   console.log(
+  //     `  Transaction Date: '${transactionDate.value || "<missing>"}', with confidence of ${
+  //       transactionDate.confidence
+  //     }`
+  //   );
+  // }
+  // const itemsField = receipt.fields["Items"];
+  // if (itemsField && itemsField.valueType === "array") {
+  //   for (const itemField of itemsField.value || []) {
+  //     if (itemField.valueType === "object") {
+  //       const itemNameField = itemField.value["Name"];
+  //       if (itemNameField && itemNameField.valueType === "string") {
+  //         console.log(
+  //           `    Item Name: '${itemNameField.value || "<missing>"}', with confidence of ${
+  //             itemNameField.confidence
+  //           }`
+  //         );
+  //       }
+  //     }
+  //   }
+  // }
+  // const totalField = receipt.fields["Total"];
+  // if (totalField && totalField.valueType === "number") {
+  //   console.log(
+  //     `  Total: '${totalField.value || "<missing>"}', with confidence of ${totalField.confidence}`
+  //   );
+  // }
 };
 
 export {init, extractReceipt};

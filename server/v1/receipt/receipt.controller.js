@@ -3,8 +3,7 @@ import { Receipt, User, File, ReceiptAmount, sequelize } from '../../db';
 import Busboy from 'busboy';
 import { isAuthenticated } from '../../middlewares';
 import { StorageType, FileContainers } from '../../common/Mappings';
-import { Op } from 'sequelize';
-import Sequelize from 'sequelize';
+import { logger } from '../../app/app.logger';
 const azureStorage = require('../../boundaries/azure_storage');
 const azureOCR = require('../../boundaries/azure_ocr');
 
@@ -74,7 +73,6 @@ receiptRouter.get('/receipt/user', isAuthenticated(), async (req, res, next) => 
         return receipt.tax_sum <= amount_max;
       });
     }
-
 
     if (receipt_number) {
       receipts = receipts.filter(receipt => {
@@ -288,24 +286,109 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
     const busboy = new Busboy({ headers: req.headers });
     const { user_id } = req.user;
 
+    const formData = {};
+
     busboy.on('file', async (fieldName, file, filename, encoding, mime_type) => {
-      if (!mime_type || !filename) {
-        return res.status(400).send({ message: 'VAL_FAILED' });
+      try {
+        if (!mime_type || !filename) {
+          return res.status(400).send({ message: 'VAL_FAILED' });
+        }
+
+
+        const ocrData = {};
+
+        if (formData['QRData']) {
+          let qrData = formData['QRData'];
+          if (qrData.startsWith('_R') && qrData.substring(4, 6) === 'AT') {
+            let qrList = qrData.split('_');
+            if (qrList.length === 14) {
+              ocrData['receipt_number'] = qrList[3];
+              ocrData['receipt_date'] = qrList[4].split('T')[0];
+              ocrData['company_name'] = qrList[2];
+              ocrData['tax_details'] = [];
+
+
+              if (qrList[5] !== '0,00') {
+                let amount = parseFloat(qrList[5].replace(',', '.'));
+                let netAmount = amount / (1 + .2);
+                ocrData['tax_details'].push({
+                  tax_percentage: 20,
+                  net: netAmount,
+                  tax: amount - netAmount,
+                  sum: amount
+                });
+              }
+
+              if (qrList[6] !== '0,00') {
+                let amount = parseFloat(qrList[6].replace(',', '.'));
+                let netAmount = amount / (1 + .1);
+                ocrData['tax_details'].push({
+                  tax_percentage: 10,
+                  net: netAmount,
+                  tax: amount - netAmount,
+                  sum: amount
+                });
+              }
+
+              if (qrList[7] !== '0,00') {
+                let amount = parseFloat(qrList[7].replace(',', '.'));
+                let netAmount = amount / (1 + .13);
+                ocrData['tax_details'].push({
+                  tax_percentage: 13,
+                  net: netAmount,
+                  tax: amount - netAmount,
+                  sum: amount
+                });
+              }
+
+              if (qrList[8] !== '0,00') {
+                let amount = parseFloat(qrList[8].replace(',', '.'));
+                let netAmount = amount / (1 + 0);
+                ocrData['tax_details'].push({
+                  tax_percentage: 0,
+                  net: netAmount,
+                  tax: amount - netAmount,
+                  sum: amount
+                });
+              }
+
+              if (qrList[9] !== '0,00') {
+                let amount = parseFloat(qrList[9].replace(',', '.'));
+                let netAmount = amount / (1 + .19);
+                ocrData['tax_details'].push({
+                  tax_percentage: 19,
+                  net: netAmount,
+                  tax: amount - netAmount,
+                  sum: amount
+                });
+              }
+            }
+          }
+        }
+
+        let azureData = {};
+
+        if (!ocrData['receipt_date']) {
+          logger.info('QR code missing, using azure');
+          azureData = await azureOCR.extractReceipt(file);
+          logger.info(JSON.stringify(azureData));
+        }
+
+        ocrData['receipt_number'] = null;
+        ocrData['receipt_date'] = null;
+        ocrData['company_name'] = null;
+        ocrData['tax_details'] = [];
+
+        res.send({ data:  ocrData});
+      } catch (err) {
+        return res.status(405).send({
+          message: err.message
+        });
       }
+    });
 
-      console.log(`typeof file ${typeof file}`);
-
-      await azureOCR.extractReceipt(file);
-      let data = {
-        receipt_number: null,
-        receipt_date: '12/29/2020',
-        company_name: 'Starbucks',
-        tax_details: [
-          { tax_percentage: 10, net: 19.49, tax: 1.95, sum: 21.44 },
-          { tax_percentage: 20, net: 19.49, tax: 3.9, sum: 23.39 }
-        ]
-      };
-      res.send({ data });
+    busboy.on('field', (fieldName, value) => {
+      formData[fieldName] = value;
     });
 
     return req.pipe(busboy);

@@ -509,13 +509,16 @@ fileRouter.post('/file/profile-picture/update', isAuthenticated(), async (req, r
 
       const extension = mime.extension(mime_type);
       let main_file_data_length = 0,
-        content = '';
+        bufContent = [];
       fileData.on('data', data => {
         main_file_data_length += data.length;
-        content += data;
+        bufContent.push(data);
       });
 
       fileData.on('end', async data => {
+
+        let fileContent = Buffer.concat(bufContent);
+
         let user = await User.findOne({
           where: {
             id: user_id
@@ -528,7 +531,7 @@ fileRouter.post('/file/profile-picture/update', isAuthenticated(), async (req, r
           modified_by: user_id,
           mime_type,
           extension,
-          content: content,
+          content: fileContent,
           storage_type: StorageType.LOCAL,
           file_size: main_file_data_length, //bytes
           metadata: JSON.stringify({ encoding: encoding })
@@ -646,13 +649,16 @@ fileRouter.post('/file/company-logo/update', isAuthenticated(), async (req, res,
 
       const extension = mime.extension(mime_type);
       let main_file_data_length = 0,
-        content = '';
+        bufContent = [];
       fileData.on('data', data => {
         main_file_data_length += data.length;
-        content += data;
+        bufContent.push(data);
       });
 
       fileData.on('end', async data => {
+
+        let fileContent = Buffer.concat(bufContent);
+
         let user = await User.findOne({
           where: {
             id: user_id
@@ -666,19 +672,19 @@ fileRouter.post('/file/company-logo/update', isAuthenticated(), async (req, res,
           modified_by: user_id,
           mime_type,
           extension,
-          content: content,
+          content: fileContent,
           storage_type: StorageType.LOCAL,
           file_size: main_file_data_length, //bytes
           metadata: JSON.stringify({ encoding: encoding })
         };
-        if (user.org && user.org.company_logo_file_id) {
+        if (user.org && user.org.companyLogo) {
           await File.update(file_instance, {
             where: {
-              id: user.org.company_logo_file_id
+              id: user.org.companyLogo.id
             }
           });
           fileObj = {
-            file_id: user.org.company_logo_file_id,
+            file_id: user.org.companyLogo.id,
             name: filename
           };
           res.send(fileObj);

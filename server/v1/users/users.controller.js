@@ -42,8 +42,27 @@ users.get('/user/me', isAuthenticated(), async (req, res, next) => {
         id: user_id,
         deleted: false
       },
+      raw: true,
+      nest: true,
       include: [...User.getStandardInclude()]
     });
+
+    const org = user.org;
+
+    if (org && org.companyLogo && org.companyLogo.content) {
+      let companyLogo  = org.companyLogo;
+      let base64 = `data:${companyLogo.mime_type};base64,${companyLogo.content.toString('base64')}`;
+      org.companyLogo.base64 = base64;
+      org.companyLogo.content = null;
+    }
+
+    if (user && user.profilePicture && user.profilePicture.content) {
+      let profilePicture  = user.profilePicture;
+      let base64 = `data:${profilePicture.mime_type};base64,${profilePicture.content.toString('base64')}`;
+
+      user.profilePicture.base64 = base64;
+      user.profilePicture.content = null;
+    }
 
     return res.send(user);
   } catch (e) {
