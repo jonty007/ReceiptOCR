@@ -5,18 +5,12 @@ import { isAuthenticated } from '../../middlewares';
 import { StorageType, FileContainers } from '../../common/Mappings';
 import { logger } from '../../app/app.logger';
 const azureStorage = require('../../boundaries/azure_storage');
-const azureOCR = require('../../boundaries/azure_ocr');
+const azureVision = require('../../boundaries/azure_vision');
+const axios = require('axios');
+const sjcl = require('sjcl');
+import { zip_inflate } from './zlib';
 
 const receiptRouter = Router();
-
-// company name
-// date range (single function)
-// receipt number
-// company payment true  or false
-// category
-// warranty unit
-// return unit
-// paid with
 
 receiptRouter.get('/receipt/user', isAuthenticated(), async (req, res, next) => {
   try {
@@ -112,7 +106,7 @@ receiptRouter.get('/receipt/user', isAuthenticated(), async (req, res, next) => 
       });
     }
 
-    return res.send({ message: 'UPLOAD.SUCCESSFUL', data: receipts });
+    return res.send({ message: 'RECEIPT_GET.SUCCESSFUL', data: receipts });
   } catch (e) {
     if (e.message) {
       return res.status(405).send({
@@ -142,7 +136,7 @@ receiptRouter.get('/receipt/org', isAuthenticated(), async (req, res, next) => {
       include: [...Receipt.getStandardInclude()]
     });
 
-    return res.send({ message: 'UPLOAD.SUCCESSFUL', data: receipts });
+    return res.send({ message: 'RECEIPT_GET.SUCCESSFUL', data: receipts });
   } catch (e) {
     if (e.message) {
       return res.status(405).send({
@@ -167,7 +161,7 @@ receiptRouter.get('/receipt/:receipt_id', isAuthenticated(), async (req, res, ne
       include: [...Receipt.getStandardInclude()]
     });
 
-    return res.send({ message: 'UPLOAD.SUCCESSFUL', data: receipt });
+    return res.send({ message: 'RECEIPT_GET.SUCCESSFUL', data: receipt });
   } catch (e) {
     if (e.message) {
       return res.status(405).send({
@@ -193,6 +187,10 @@ receiptRouter.get(
         },
         include: [...Receipt.getStandardInclude()]
       });
+
+      if (!receipt) {
+        return res.status(404).send({ message: 'RECEIPT.UPDATE.NO_EXIST' });
+      }
 
       let data = null;
       if (receipt.receipt_file_id && receipt.receipt_file) {
@@ -261,10 +259,6 @@ receiptRouter.post('/receiptqr', isAuthenticated(), async (req, res, next) => {
       if (!mime_type || !filename) {
         return res.status(400).send({ message: 'VAL_FAILED' });
       }
-
-      // console.log(`typeof file ${typeof file}`);
-
-      // await azureOCR.extractReceipt(file);
       let data = {
         message: 'send this data object in receipt OCR form as QRData'
       };
@@ -294,92 +288,115 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
           return res.status(400).send({ message: 'VAL_FAILED' });
         }
 
+        const bufContent = [];
 
-        const ocrData = {};
+        file.on('data', data => {
+          bufContent.push(data);
+        });
 
-        if (formData['QRData']) {
-          let qrData = formData['QRData'];
-          if (qrData.startsWith('_R') && qrData.substring(4, 6) === 'AT') {
-            let qrList = qrData.split('_');
-            if (qrList.length === 14) {
-              ocrData['receipt_number'] = qrList[3];
-              ocrData['receipt_date'] = qrList[4].split('T')[0];
-              ocrData['company_name'] = qrList[2];
-              ocrData['tax_details'] = [];
+        file.on('end', async data => {
+          let fileContent = Buffer.concat(bufContent);
+          const ocrData = {};
+          ocrData['receipt_number'] = null;
+          ocrData['receipt_date'] = null;
+          ocrData['company_name'] = null;
+          ocrData['tax_details'] = [];
 
+          if (formData['QRData']) {
+            let qrData = formData['QRData'];
+            extractData(ocrData, qrData);
+          }
 
-              if (qrList[5] !== '0,00') {
-                let amount = parseFloat(qrList[5].replace(',', '.'));
-                let netAmount = amount / (1 + .2);
-                ocrData['tax_details'].push({
-                  tax_percentage: 20,
-                  net: netAmount,
-                  tax: amount - netAmount,
-                  sum: amount
-                });
-              }
+          let azureData = {};
 
-              if (qrList[6] !== '0,00') {
-                let amount = parseFloat(qrList[6].replace(',', '.'));
-                let netAmount = amount / (1 + .1);
-                ocrData['tax_details'].push({
-                  tax_percentage: 10,
-                  net: netAmount,
-                  tax: amount - netAmount,
-                  sum: amount
-                });
-              }
+          if (!ocrData['receipt_date']) {
+            logger.info('QR code missing, using azure');
+            azureData = await azureVision.extractReceipt(fileContent);
+            if (azureData && azureData.analyzeResult && azureData.analyzeResult.readResults) {
+              let readResult = azureData.analyzeResult.readResults[0];
+              let lines = readResult.lines;
+              let efstaNumbers = [];
+              lines.forEach(line => {
+                if (line.text) {
+                  if (line.text.toLowerCase().includes('efsta') && false) {
+                    logger.info(line.text);
+                    let n1 = line.text.match(/\d+/)[0];
+                    let n2 = line.text.split('#')[1].trim();
+                    let n3 = line.text.split(' ')[line.text.split(' ').length - 1].trim();
+                    efstaNumbers.push(n1);
+                    efstaNumbers.push(n2);
+                    efstaNumbers.push(n3);
+                  }
+                }
+              });
 
-              if (qrList[7] !== '0,00') {
-                let amount = parseFloat(qrList[7].replace(',', '.'));
-                let netAmount = amount / (1 + .13);
-                ocrData['tax_details'].push({
-                  tax_percentage: 13,
-                  net: netAmount,
-                  tax: amount - netAmount,
-                  sum: amount
-                });
-              }
-
-              if (qrList[8] !== '0,00') {
-                let amount = parseFloat(qrList[8].replace(',', '.'));
-                let netAmount = amount / (1 + 0);
-                ocrData['tax_details'].push({
-                  tax_percentage: 0,
-                  net: netAmount,
-                  tax: amount - netAmount,
-                  sum: amount
-                });
-              }
-
-              if (qrList[9] !== '0,00') {
-                let amount = parseFloat(qrList[9].replace(',', '.'));
-                let netAmount = amount / (1 + .19);
-                ocrData['tax_details'].push({
-                  tax_percentage: 19,
-                  net: netAmount,
-                  tax: amount - netAmount,
-                  sum: amount
-                });
+              if (efstaNumbers && efstaNumbers.length) {
+                for (let i = 0; i < efstaNumbers.length; i++) {
+                  let number = efstaNumbers[i];
+                  try {
+                    if (typeof BigInt(number) === 'bigint') {
+                      let key = sjcl.hash.sha256.hash(number);
+                      let k = sjcl.hash.sha256.hash(key);
+                      let code = sjcl.codec.base64url.fromBits(k);
+                      let efstResult = await axios.get(
+                        `https://efsta.net:8084/ext.svc/?index=${code}`
+                      );
+                      if (efstResult.data && efstResult.data.length != 0) {
+                        let dataString = efstResult.data[0];
+                        let aes = new sjcl.cipher.aes(key);
+                        let enc = sjcl.codec.base64.toBits(dataString);
+                        let dec = sjcl.mode.gcm.decrypt(aes, enc, [0, 0, 0], []);
+                        let zip_inflate_data_length = sjcl.bitArray.bitLength(dec) / 8;
+                        let finalResult = zip_inflate(dec, zip_inflate_data_length);
+                        let efstaQrData = JSON.parse(finalResult);
+                        extractData(ocrData, efstaQrData['QR']);
+                        break;
+                      }
+                    }
+                  } catch (err) {
+                    logger.error(err);
+                  }
+                }
               }
             }
           }
-        }
 
-        let azureData = {};
+          if (
+            !ocrData['receipt_date'] &&
+            azureData &&
+            azureData.analyzeResult &&
+            azureData.analyzeResult.readResults
+          ) {
+            logger.info('EFSTA code missing, using manual OCR');
+            let readResult = azureData.analyzeResult.readResults[0];
+            let lines = readResult.lines;
+            if (lines[0].text) {
+              ocrData['company_name'] = lines[0].text;
+            }
 
-        if (!ocrData['receipt_date']) {
-          logger.info('QR code missing, using azure');
-          azureData = await azureOCR.extractReceipt(file);
-          logger.info(JSON.stringify(azureData));
-        }
+            let dateFound = false;
+            for(let i = 0; i < lines.length; i++) {
+              let line = lines[i];
+              if (line.words) {
+                let words = line.words;
+                for(let j = 0; j < words.length; j++) {
+                  let word =  words[j];
+                  if (checkForDate(word.text)) {
+                    let basicDate = checkForDate(word.text);
+                    ocrData['receipt_date'] = formatDate(basicDate);
+                    dateFound = true;
+                    break;
+                  }
+                }
+              }
+              if (dateFound) {
+                break;
+              }
+            }
+          }
 
-        ocrData['receipt_number'] = null;
-        ocrData['receipt_date'] = null;
-        ocrData['company_name'] = null;
-        ocrData['tax_details'] = [];
-
-        res.send({ data:  ocrData});
+          res.send({ data: ocrData });
+        });
       } catch (err) {
         return res.status(405).send({
           message: err.message
@@ -400,6 +417,148 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
     }
   }
 });
+
+function formatDate(date) {
+  var d = new Date(date),
+      month = '' + (d.getMonth() + 1),
+      day = '' + d.getDate(),
+      year = d.getFullYear();
+
+  if (month.length < 2) 
+      month = '0' + month;
+  if (day.length < 2) 
+      day = '0' + day;
+
+  return [year, month, day].join('-');
+}
+
+function checkDateParse(str,  operator) {
+  let arr = str.split(operator);
+
+  if (Date.parse(str)) {
+    return str;
+  }
+
+  if (Date.parse(`${arr[1]}${operator}${arr[0]}${operator}${arr[2]}`)) {
+    return `${arr[1]}${operator}${arr[0]}${operator}${arr[2]}`;
+  }
+  return false;
+}
+
+function checkForDate(str) {
+  if (!str) {
+    return false;
+  }
+  let strArr = [],
+    i;
+
+  strArr = str.split('-');
+  if (strArr.length === 3) {
+    for (i = 0; i < strArr.length; i++) {
+      if (!strArr[i]) {
+        return false;
+      }
+    }
+    let temp = checkDateParse(str, '-');
+    if (temp) {
+      return temp;
+    }
+  }
+
+  strArr = str.split('/');
+  if (strArr.length === 3) {
+    for (i = 0; i < strArr.length; i++) {
+      if (!strArr[i]) {
+        return false;
+      }
+    }
+    let temp = checkDateParse(str, '/');
+    if (temp) {
+      return temp;
+    }
+  }
+
+  strArr = str.split('.');
+  if (strArr.length === 3) {
+    for (i = 0; i < strArr.length; i++) {
+      if (!strArr[i]) {
+        return false;
+      }
+    }
+    let temp = checkDateParse(str, '.');
+    if (temp) {
+      return temp;
+    }
+  }
+  return false;
+}
+
+function extractData(ocrData, qrData) {
+  if (qrData.startsWith('_R') && qrData.substring(4, 6) === 'AT') {
+    let qrList = qrData.split('_');
+    if (qrList.length === 14) {
+      ocrData['receipt_number'] = qrList[3];
+      ocrData['receipt_date'] = qrList[4].split('T')[0];
+      ocrData['company_name'] = qrList[2];
+      ocrData['tax_details'] = [];
+
+      if (qrList[5] !== '0,00') {
+        let amount = parseFloat(qrList[5].replace(',', '.'));
+        let netAmount = amount / (1 + 0.2);
+        ocrData['tax_details'].push({
+          tax_percentage: 20,
+          net: netAmount,
+          tax: amount - netAmount,
+          sum: amount
+        });
+      }
+
+      if (qrList[6] !== '0,00') {
+        let amount = parseFloat(qrList[6].replace(',', '.'));
+        let netAmount = amount / (1 + 0.1);
+        ocrData['tax_details'].push({
+          tax_percentage: 10,
+          net: netAmount,
+          tax: amount - netAmount,
+          sum: amount
+        });
+      }
+
+      if (qrList[7] !== '0,00') {
+        let amount = parseFloat(qrList[7].replace(',', '.'));
+        let netAmount = amount / (1 + 0.13);
+        ocrData['tax_details'].push({
+          tax_percentage: 13,
+          net: netAmount,
+          tax: amount - netAmount,
+          sum: amount
+        });
+      }
+
+      if (qrList[8] !== '0,00') {
+        let amount = parseFloat(qrList[8].replace(',', '.'));
+        let netAmount = amount / (1 + 0);
+        ocrData['tax_details'].push({
+          tax_percentage: 0,
+          net: netAmount,
+          tax: amount - netAmount,
+          sum: amount
+        });
+      }
+
+      if (qrList[9] !== '0,00') {
+        let amount = parseFloat(qrList[9].replace(',', '.'));
+        let netAmount = amount / (1 + 0.19);
+        ocrData['tax_details'].push({
+          tax_percentage: 19,
+          net: netAmount,
+          tax: amount - netAmount,
+          sum: amount
+        });
+      }
+    }
+  }
+}
 
 receiptRouter.post('/receipt', isAuthenticated(), async (req, res, next) => {
   try {

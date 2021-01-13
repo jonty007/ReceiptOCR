@@ -3,7 +3,8 @@ const emailService = require('../common/services/email/email_service'),
   s3Boundary = require('../boundaries/s3'),
   azureStorage = require('../boundaries/azure_storage'),
   firebaseBoundary = require('../boundaries/firebase'),
-  azureOCR = require('../boundaries/azure_ocr');
+  azureOCR = require('../boundaries/azure_ocr'),
+  azureVision = require('../boundaries/azure_vision');
 // socketBoundary = require('../boundaries/socket');
 
 /**
@@ -26,7 +27,10 @@ module.exports = function(http_server, config) {
 
   firebaseBoundary.init(firebase);
 
-  azureOCR.init(azure)
+  // commenting OCR
+  // azureOCR.init(azure);
+
+  azureVision.init(azure);
 
   // init socketBoundary
   // socketBoundary.init(http_server);

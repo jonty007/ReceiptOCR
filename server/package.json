@@ -38,6 +38,8 @@
   "license": "ISC",
   "dependencies": {
     "@azure/ai-form-recognizer": "^3.0.0",
+    "@azure/cognitiveservices-computervision": "^7.1.0",
+    "@azure/ms-rest-js": "^2.1.0",
     "@azure/storage-blob": "^12.2.1",
     "@google-cloud/vision": "^2.1.2",
     "app-module-path": "^2.2.0",
@@ -78,6 +80,7 @@
     "sequelize-cli": "^5.5.1",
     "serve-static": "^1.14.1",
     "sharp": "^0.23.4",
+    "sjcl": "^1.0.8",
     "stripe": "^8.62.0",
     "tedious": "^9.2.1",
     "uuid": "^3.3.3",

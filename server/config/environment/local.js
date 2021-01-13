@@ -101,6 +101,10 @@ module.exports = {
       endpoint: 'https://preceiptocrdev.cognitiveservices.azure.com/',
       key: '59a64e59ea9b458c95025a3017faa84f'
     },
+    vision: {
+      key: '9391b7d7d43449c58f27c173147df09a',
+      endpoint: 'https://preceiptvision.cognitiveservices.azure.com/'
+    },
     storage: {
       baseURL: 'https://pdocs.blob.core.windows.net',
       accountName: 'pdocs',
