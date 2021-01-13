@@ -117,6 +117,379 @@ receiptRouter.get('/receipt/user', isAuthenticated(), async (req, res, next) => 
   }
 });
 
+receiptRouter.get('/report/category', isAuthenticated(), async (req, res, next) => {
+  try {
+    const { user_id } = req.user;
+
+    const {
+      company_name,
+      invoice_date_start,
+      invoice_date_end,
+      receipt_number,
+      company_payment,
+      category,
+      warranty_unit,
+      return_unit,
+      paid_with,
+      amount_min,
+      amount_max
+    } = req.query;
+
+    let receipts = await Receipt.findAll({
+      where: {
+        user_id: user_id,
+        deleted: false
+      },
+      order: [['created_at', 'ASC']],
+      include: [...Receipt.getStandardInclude()]
+    });
+
+    if (company_name) {
+      receipts = receipts.filter(receipt => {
+        return receipt.company_name.toLowerCase().indexOf(company_name.toLocaleLowerCase()) > -1;
+      });
+    }
+    if (invoice_date_start) {
+      receipts = receipts.filter(receipt => {
+        return new Date(receipt.invoice_date) >= new Date(invoice_date_start);
+      });
+    }
+
+    if (invoice_date_end) {
+      receipts = receipts.filter(receipt => {
+        return new Date(receipt.invoice_date) <= new Date(invoice_date_end);
+      });
+    }
+
+    if (amount_min) {
+      receipts = receipts.filter(receipt => {
+        return receipt.tax_sum >= amount_min;
+      });
+    }
+
+    if (amount_max) {
+      receipts = receipts.filter(receipt => {
+        return receipt.tax_sum <= amount_max;
+      });
+    }
+
+    if (receipt_number) {
+      receipts = receipts.filter(receipt => {
+        return (
+          receipt.receipt_number.toLowerCase().indexOf(receipt_number.toLocaleLowerCase()) > -1
+        );
+      });
+    }
+
+    if (typeof company_payment === 'boolean') {
+      receipts = receipts.filter(receipt => {
+        return receipt.company_payment === company_payment;
+      });
+    }
+
+    if (category) {
+      receipts = receipts.filter(receipt => {
+        return receipt.category.toLowerCase().indexOf(category.toLocaleLowerCase()) > -1;
+      });
+    }
+
+    if (warranty_unit) {
+      receipts = receipts.filter(receipt => {
+        return receipt.warranty_unit.toLowerCase().indexOf(warranty_unit.toLocaleLowerCase()) > -1;
+      });
+    }
+
+    if (return_unit) {
+      receipts = receipts.filter(receipt => {
+        return receipt.return_unit.toLowerCase().indexOf(return_unit.toLocaleLowerCase()) > -1;
+      });
+    }
+
+    if (paid_with) {
+      receipts = receipts.filter(receipt => {
+        return receipt.paid_with.toLowerCase().indexOf(paid_with.toLocaleLowerCase()) > -1;
+      });
+    }
+
+    let reportData  = {};
+    receipts.forEach(ele => {
+      try {
+        if (ele.receipt_category && !reportData[ele.receipt_category.label]) {
+          reportData[ele.receipt_category.label] = 0;
+        }
+        
+        if (ele.tax_sum && parseInt(ele.tax_sum)) {
+          reportData[ele.receipt_category.label] += parseInt(ele.tax_sum);
+        }
+      } catch (err) {
+        logger.error(err)
+      }
+    })
+
+    return res.send({ message: 'RECEIPT_GET.SUCCESSFUL', data: reportData });
+  } catch (e) {
+    if (e.message) {
+      return res.status(405).send({
+        message: e.message
+      });
+    }
+    return next(e);
+  }
+});
+
+receiptRouter.get('/report/payment_type', isAuthenticated(), async (req, res, next) => {
+  try {
+    const { user_id } = req.user;
+
+    const {
+      company_name,
+      invoice_date_start,
+      invoice_date_end,
+      receipt_number,
+      company_payment,
+      category,
+      warranty_unit,
+      return_unit,
+      paid_with,
+      amount_min,
+      amount_max
+    } = req.query;
+
+    let receipts = await Receipt.findAll({
+      where: {
+        user_id: user_id,
+        deleted: false
+      },
+      order: [['created_at', 'ASC']],
+      include: [...Receipt.getStandardInclude()]
+    });
+
+    if (company_name) {
+      receipts = receipts.filter(receipt => {
+        return receipt.company_name.toLowerCase().indexOf(company_name.toLocaleLowerCase()) > -1;
+      });
+    }
+    if (invoice_date_start) {
+      receipts = receipts.filter(receipt => {
+        return new Date(receipt.invoice_date) >= new Date(invoice_date_start);
+      });
+    }
+
+    if (invoice_date_end) {
+      receipts = receipts.filter(receipt => {
+        return new Date(receipt.invoice_date) <= new Date(invoice_date_end);
+      });
+    }
+
+    if (amount_min) {
+      receipts = receipts.filter(receipt => {
+        return receipt.tax_sum >= amount_min;
+      });
+    }
+
+    if (amount_max) {
+      receipts = receipts.filter(receipt => {
+        return receipt.tax_sum <= amount_max;
+      });
+    }
+
+    if (receipt_number) {
+      receipts = receipts.filter(receipt => {
+        return (
+          receipt.receipt_number.toLowerCase().indexOf(receipt_number.toLocaleLowerCase()) > -1
+        );
+      });
+    }
+
+    if (typeof company_payment === 'boolean') {
+      receipts = receipts.filter(receipt => {
+        return receipt.company_payment === company_payment;
+      });
+    }
+
+    if (category) {
+      receipts = receipts.filter(receipt => {
+        return receipt.category.toLowerCase().indexOf(category.toLocaleLowerCase()) > -1;
+      });
+    }
+
+    if (warranty_unit) {
+      receipts = receipts.filter(receipt => {
+        return receipt.warranty_unit.toLowerCase().indexOf(warranty_unit.toLocaleLowerCase()) > -1;
+      });
+    }
+
+    if (return_unit) {
+      receipts = receipts.filter(receipt => {
+        return receipt.return_unit.toLowerCase().indexOf(return_unit.toLocaleLowerCase()) > -1;
+      });
+    }
+
+    if (paid_with) {
+      receipts = receipts.filter(receipt => {
+        return receipt.paid_with.toLowerCase().indexOf(paid_with.toLocaleLowerCase()) > -1;
+      });
+    }
+
+    let reportData  = {};
+    receipts.forEach(ele => {
+      try {
+        if (ele.payment_type && !reportData[ele.payment_type.label]) {
+          reportData[ele.payment_type.label] = 0;
+        }
+        
+        if (ele.tax_sum && parseInt(ele.tax_sum)) {
+          reportData[ele.payment_type.label] += parseInt(ele.tax_sum);
+        }
+      } catch (err) {
+        logger.error(err)
+      }
+    })
+
+    return res.send({ message: 'RECEIPT_GET.SUCCESSFUL', data: reportData });
+  } catch (e) {
+    if (e.message) {
+      return res.status(405).send({
+        message: e.message
+      });
+    }
+    return next(e);
+  }
+});
+
+receiptRouter.get('/report/vat', isAuthenticated(), async (req, res, next) => {
+  try {
+    const { user_id } = req.user;
+
+    const {
+      company_name,
+      invoice_date_start,
+      invoice_date_end,
+      receipt_number,
+      company_payment,
+      category,
+      warranty_unit,
+      return_unit,
+      paid_with,
+      amount_min,
+      amount_max
+    } = req.query;
+
+    let receipts = await Receipt.findAll({
+      where: {
+        user_id: user_id,
+        deleted: false
+      },
+      order: [['created_at', 'ASC']],
+      include: [...Receipt.getStandardInclude()]
+    });
+
+    if (company_name) {
+      receipts = receipts.filter(receipt => {
+        return receipt.company_name.toLowerCase().indexOf(company_name.toLocaleLowerCase()) > -1;
+      });
+    }
+    if (invoice_date_start) {
+      receipts = receipts.filter(receipt => {
+        return new Date(receipt.invoice_date) >= new Date(invoice_date_start);
+      });
+    }
+
+    if (invoice_date_end) {
+      receipts = receipts.filter(receipt => {
+        return new Date(receipt.invoice_date) <= new Date(invoice_date_end);
+      });
+    }
+
+    if (amount_min) {
+      receipts = receipts.filter(receipt => {
+        return receipt.tax_sum >= amount_min;
+      });
+    }
+
+    if (amount_max) {
+      receipts = receipts.filter(receipt => {
+        return receipt.tax_sum <= amount_max;
+      });
+    }
+
+    if (receipt_number) {
+      receipts = receipts.filter(receipt => {
+        return (
+          receipt.receipt_number.toLowerCase().indexOf(receipt_number.toLocaleLowerCase()) > -1
+        );
+      });
+    }
+
+    if (typeof company_payment === 'boolean') {
+      receipts = receipts.filter(receipt => {
+        return receipt.company_payment === company_payment;
+      });
+    }
+
+    if (category) {
+      receipts = receipts.filter(receipt => {
+        return receipt.category.toLowerCase().indexOf(category.toLocaleLowerCase()) > -1;
+      });
+    }
+
+    if (warranty_unit) {
+      receipts = receipts.filter(receipt => {
+        return receipt.warranty_unit.toLowerCase().indexOf(warranty_unit.toLocaleLowerCase()) > -1;
+      });
+    }
+
+    if (return_unit) {
+      receipts = receipts.filter(receipt => {
+        return receipt.return_unit.toLowerCase().indexOf(return_unit.toLocaleLowerCase()) > -1;
+      });
+    }
+
+    if (paid_with) {
+      receipts = receipts.filter(receipt => {
+        return receipt.paid_with.toLowerCase().indexOf(paid_with.toLocaleLowerCase()) > -1;
+      });
+    }
+
+    let reportData  = {};
+    let taxLabel = {
+      '10': '10 percentage',
+      '13': '13 percentage',
+      '20': '20 percentage',
+      '0': '0 percentage',
+      '19': '19 percentage'
+    };
+
+    receipts.forEach(ele => {
+      try {
+        if (ele.receipt_amounts && ele.receipt_amounts.length) {
+          let amounts = ele.receipt_amounts;
+          amounts.forEach(x => {
+            if (x.tax_percentage && !reportData[taxLabel[x.tax_percentage]]) {
+              reportData[taxLabel[x.tax_percentage]] = 0;
+            }
+            
+            reportData[taxLabel[x.tax_percentage]] += x.tax;
+          });
+        }
+  
+        
+      } catch (err) {
+        logger.error(err)
+      }
+    })
+
+    return res.send({ message: 'RECEIPT_GET.SUCCESSFUL', data: reportData });
+  } catch (e) {
+    if (e.message) {
+      return res.status(405).send({
+        message: e.message
+      });
+    }
+    return next(e);
+  }
+});
+
 receiptRouter.get('/receipt/org', isAuthenticated(), async (req, res, next) => {
   try {
     const { user_id } = req.user;
