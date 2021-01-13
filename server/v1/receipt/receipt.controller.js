@@ -318,7 +318,7 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
               let efstaNumbers = [];
               lines.forEach(line => {
                 if (line.text) {
-                  if (line.text.toLowerCase().includes('efsta') && false) {
+                  if (line.text.toLowerCase().includes('efsta')) {
                     logger.info(line.text);
                     let n1 = line.text.match(/\d+/)[0];
                     let n2 = line.text.split('#')[1].trim();
