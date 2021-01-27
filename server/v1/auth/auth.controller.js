@@ -334,7 +334,8 @@ auth.post('/auth/login', async (req, res, next) => {
           email,
           org_id: org.id,
           deleted: false
-        }
+        },
+        include: [...User.getMinimalInclude()]
       });
     } else {
       user = await User.findOne({
@@ -410,7 +411,15 @@ auth.post('/auth/login', async (req, res, next) => {
       }
     );
 
-    return res.send({ token, user: { id, actual_user_id: id } });
+    return res.send({
+      token,
+      user: {
+        id,
+        actual_user_id: id,
+        name: `${user.first_name.trim()}${user.last_name ? (' ' + user.last_name.trim()) : ''}`,
+        org_name: `${user.org ? user.org.name : null}`
+      }
+    });
   } catch (e) {
     if (e.message) {
       return res.status(405).send({
