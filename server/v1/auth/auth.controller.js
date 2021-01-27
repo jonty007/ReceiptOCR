@@ -340,6 +340,7 @@ auth.post('/auth/login', async (req, res, next) => {
       user = await User.findOne({
         where: {
           email,
+          org_id: null,
           deleted: false
         }
       });
