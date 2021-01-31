@@ -8,7 +8,11 @@ const azureStorage = require('../../boundaries/azure_storage');
 const azureVision = require('../../boundaries/azure_vision');
 const axios = require('axios');
 const sjcl = require('sjcl');
+const ExcelJS = require('exceljs');
+const { serverUrl } = require('../../config');
+import { createJWT, decodeJWT} from '../../common/auth.utils';
 import { zip_inflate } from './zlib';
+const fs = require('fs');
 
 const receiptRouter = Router();
 
@@ -211,20 +215,20 @@ receiptRouter.get('/report/category', isAuthenticated(), async (req, res, next) 
       });
     }
 
-    let reportData  = {};
+    let reportData = {};
     receipts.forEach(ele => {
       try {
         if (ele.receipt_category && !reportData[ele.receipt_category.label]) {
           reportData[ele.receipt_category.label] = 0;
         }
-        
+
         if (ele.tax_sum && parseInt(ele.tax_sum)) {
           reportData[ele.receipt_category.label] += parseInt(ele.tax_sum);
         }
       } catch (err) {
-        logger.error(err)
+        logger.error(err);
       }
-    })
+    });
 
     return res.send({ message: 'RECEIPT_GET.SUCCESSFUL', data: reportData });
   } catch (e) {
@@ -331,20 +335,20 @@ receiptRouter.get('/report/payment_type', isAuthenticated(), async (req, res, ne
       });
     }
 
-    let reportData  = {};
+    let reportData = {};
     receipts.forEach(ele => {
       try {
         if (ele.payment_type && !reportData[ele.payment_type.label]) {
           reportData[ele.payment_type.label] = 0;
         }
-        
+
         if (ele.tax_sum && parseInt(ele.tax_sum)) {
           reportData[ele.payment_type.label] += parseInt(ele.tax_sum);
         }
       } catch (err) {
-        logger.error(err)
+        logger.error(err);
       }
-    })
+    });
 
     return res.send({ message: 'RECEIPT_GET.SUCCESSFUL', data: reportData });
   } catch (e) {
@@ -451,7 +455,7 @@ receiptRouter.get('/report/vat', isAuthenticated(), async (req, res, next) => {
       });
     }
 
-    let reportData  = {};
+    let reportData = {};
     let taxLabel = {
       '10': '10 percentage',
       '13': '13 percentage',
@@ -468,16 +472,14 @@ receiptRouter.get('/report/vat', isAuthenticated(), async (req, res, next) => {
             if (x.tax_percentage && !reportData[taxLabel[x.tax_percentage]]) {
               reportData[taxLabel[x.tax_percentage]] = 0;
             }
-            
+
             reportData[taxLabel[x.tax_percentage]] += x.tax;
           });
         }
-  
-        
       } catch (err) {
-        logger.error(err)
+        logger.error(err);
       }
-    })
+    });
 
     return res.send({ message: 'RECEIPT_GET.SUCCESSFUL', data: reportData });
   } catch (e) {
@@ -748,12 +750,12 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
             }
 
             let dateFound = false;
-            for(let i = 0; i < lines.length; i++) {
+            for (let i = 0; i < lines.length; i++) {
               let line = lines[i];
               if (line.words) {
                 let words = line.words;
-                for(let j = 0; j < words.length; j++) {
-                  let word =  words[j];
+                for (let j = 0; j < words.length; j++) {
+                  let word = words[j];
                   if (checkForDate(word.text)) {
                     let basicDate = checkForDate(word.text);
                     ocrData['receipt_date'] = formatDate(basicDate);
@@ -791,21 +793,169 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
   }
 });
 
+receiptRouter.get('/receipts/export', isAuthenticated(), async (req, res, next) => {
+  try {
+    const { user_id } = req.user;
+
+    let receipts = await Receipt.findAll({
+      where: {
+        user_id: user_id,
+        deleted: false
+      },
+      order: [['created_at', 'ASC']],
+      include: [...Receipt.getStandardInclude()]
+    });
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet();
+    sheet.properties.defaultColWidth = 25;
+
+    sheet.columns = [
+      { header: 'Rechnungsdatum', key: 'rechnungsdatum' },
+      { header: 'Firma', key: 'firma' },
+      { header: 'Beschreibung', key: 'beschreibung' },
+      { header: 'Kategorie', key: 'kategorie' },
+      { header: 'Zahlungsart', key: 'zahlungsart' },
+      { header: 'Beleg', key: 'beleg' },
+      { header: 'Normalbetrag (Netto)', key: 'normalbetrag_netto' },
+      { header: 'Normalbetrag (USt.)', key: 'normalbetrag_ust' },
+      { header: 'Normalbetrag', key: 'normalbetrag' },
+      { header: 'Gesamtbetrag (Netto)', key: 'gesamtbetrag_netto' },
+      { header: 'Gesamtbetrag (USt.)', key: 'gesamtbetrag_ust' },
+      { header: 'Gesamtbetrag', key: 'gesamtbetrag' },
+      { header: 'Beleg', key: 'beleg' }
+    ];
+    if (receipts.length) {
+      const receiptLength = receipts.length;
+      receipts.forEach((receipt, index) => {
+        let token = '';
+        if (receipt.receipt_file) {
+          token = createJWT({ data: {user_id: user_id, receipt_id: receipt.id}})
+        }
+
+        let receiptAmounts = receipt.receipt_amounts;
+        let taxAmount = 0, netAmount = 0;
+        receiptAmounts.forEach(amount => {
+          taxAmount += amount.tax ? amount.tax : 0;
+          netAmount += amount.net ? amount.net : 0;
+        });
+        sheet.addRow([
+          receipt.invoice_date,
+          receipt.company_name,
+          receipt.note,
+          receipt.receipt_category ? receipt.receipt_category.label : '',
+          receipt.payment_type ? receipt.payment_type.label : '',
+          receipt.receipt_number,
+          netAmount,
+          taxAmount,
+          netAmount + taxAmount,
+          netAmount,
+          taxAmount,
+          netAmount + taxAmount
+        ]);
+        let receiptLink = receipt.receipt_file ? `${serverUrl}/receipts/receipt/${receipt.receipt_file.name}/${receipt.id}?p=${token}` : '';
+        sheet.getCell(`M${index + 2}`).value = {
+          text: receiptLink,
+          hyperlink: receiptLink,
+          tooltip: receiptLink
+        };
+
+      });
+
+      sheet.getCell(`G${receiptLength + 2}`).value = { formula: `SUM(G2:G${receiptLength+1})` };
+      sheet.getCell(`H${receiptLength + 2}`).value = { formula: `SUM(H2:H${receiptLength+1})` };
+      sheet.getCell(`I${receiptLength + 2}`).value = { formula: `SUM(I2:I${receiptLength+1})` };
+      sheet.getCell(`J${receiptLength + 2}`).value = { formula: `SUM(J2:J${receiptLength+1})` };
+      sheet.getCell(`K${receiptLength + 2}`).value = { formula: `SUM(K2:K${receiptLength+1})` };
+      sheet.getCell(`L${receiptLength + 2}`).value = { formula: `SUM(L2:L${receiptLength+1})` };
+    }
+    var fileName = 'Report.xlsx';
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader('Content-Disposition', 'attachment; filename=' + fileName);
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (e) {
+    if (e.message) {
+      return res.status(405).send({
+        message: e.message
+      });
+    }
+  }
+});
+
+receiptRouter.get(
+  '/receipts/receipt/:name/:receipt_id',
+  async (req, res, next) => {
+    try {
+      const { p } = req.query;
+
+      let decoded = decodeJWT({token: p});
+
+      if (!decoded) {
+        return res.status(401).send({message: 'INVALID_TOKEN'});
+      }
+      const { receipt_id, user_id } = decoded;
+
+      if (!receipt_id || !user_id) {
+        return res.status(401).send({message: 'INVALID_TOKEN'});
+      }
+      
+
+      const receipt = await Receipt.findOne({
+        where: {
+          id: receipt_id,
+          user_id: user_id,
+          deleted: false
+        },
+        include: [...Receipt.getStandardInclude()]
+      });
+
+      if (!receipt) {
+        return res.status(404).send({ message: 'RECEIPT.UPDATE.NO_EXIST' });
+      }
+
+      if (receipt.receipt_file_id && receipt.receipt_file) {
+        let { receipt_file } = receipt;
+        let name = receipt_file.id + '_' + receipt_file.name;
+        const fileLocation = `./receipt_docs/${name}_${Math.floor(Math.random() * 1000) + 1}`;
+        await azureStorage.downloadAsFile(name, fileLocation);
+
+        let fileTemp = fs.createReadStream(fileLocation);
+        let stat = fs.statSync(fileLocation);
+        res.setHeader('Content-Length', stat.size);
+        res.setHeader('Content-Type', receipt_file.mime_type);
+        res.setHeader('Content-Disposition', `attachment; filename=${receipt_file.name}`);
+        fileTemp.pipe(res);
+        fs.unlinkSync(fileLocation);
+      }
+    } catch (e) {
+      if (e.message) {
+        return res.status(405).send({
+          message: e.message
+        });
+      }
+      return next(e);
+    }
+  }
+);
+
 function formatDate(date) {
   var d = new Date(date),
-      month = '' + (d.getMonth() + 1),
-      day = '' + d.getDate(),
-      year = d.getFullYear();
+    month = '' + (d.getMonth() + 1),
+    day = '' + d.getDate(),
+    year = d.getFullYear();
 
-  if (month.length < 2) 
-      month = '0' + month;
-  if (day.length < 2) 
-      day = '0' + day;
+  if (month.length < 2) month = '0' + month;
+  if (day.length < 2) day = '0' + day;
 
   return [year, month, day].join('-');
 }
 
-function checkDateParse(str,  operator) {
+function checkDateParse(str, operator) {
   let arr = str.split(operator);
 
   if (Date.parse(str)) {
@@ -988,7 +1138,7 @@ receiptRouter.post('/receipt', isAuthenticated(), async (req, res, next) => {
                 amounts = JSON.parse(amounts);
                 if (amounts.length) {
                   amounts.forEach(amount => {
-                    tax_sum += amount.sum;
+                    tax_sum += amount.sum ? amount.sum : 0;
                   });
                 }
               }
@@ -1025,9 +1175,9 @@ receiptRouter.post('/receipt', isAuthenticated(), async (req, res, next) => {
                   let amountParam = {
                     receipt_id: receipt.id,
                     tax_percentage: amount.tax_percentage,
-                    net: amount.net,
-                    tax: amount.tax,
-                    sum: amount.sum,
+                    net: amount.net? amount.net : 0,
+                    tax: amount.tax? amount.tax : 0,
+                    sum: amount.sum ? amount.sum : 0,
                     created_by: actual_user_id,
                     modified_by: actual_user_id
                   };

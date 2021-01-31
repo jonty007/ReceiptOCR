@@ -96,11 +96,25 @@ const init = async function(azure) {
         return { status: 400, message: 'Blob doesnot exists' };
       }
       const downloadBlockBlobResponse = await blobClient.download();
+
       const downloaded = await exports.streamToBuffer(downloadBlockBlobResponse.readableStreamBody);
       return { status: 200, data: downloaded };
     } catch (error) {
       return { status: 400, message: error };
     }
+  },
+  downloadAsFile = async function(name, filePath) {
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+      const containerExists = await containerClient.exists();
+      if (!containerExists) {
+        return { status: 400, message: 'Container doesnot exists' };
+      }
+      const blobClient = containerClient.getBlobClient(name);
+      const blobExists = await blobClient.exists();
+      if (!blobExists) {
+        return { status: 400, message: 'Blob doesnot exists' };
+      }
+      await blobClient.downloadToFile(filePath);
   },
   streamToBuffer = async function(readableStream) {
     return new Promise((resolve, reject) => {
@@ -123,5 +137,6 @@ export {
   uploadBlob,
   getBlobsList,
   downloadBlob,
-  streamToBuffer
+  streamToBuffer,
+  downloadAsFile
 };
