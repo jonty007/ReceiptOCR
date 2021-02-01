@@ -82,7 +82,7 @@ module.exports = {
   },
 
   host: 'http://localhost:4001/client',
-  serverUrl: 'http://localhost:4001/api/v1',
+  serverUrl: 'https://preceipt1.azurewebsites.net/api/v1',
   https: false,
   http: {},
   client: true,
