@@ -745,14 +745,14 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
             logger.info('EFSTA code missing, using manual OCR');
             let readResult = azureData.analyzeResult.readResults[0];
             let lines = readResult.lines;
-            if (lines[0].text) {
+            if (lines[0] &&  lines[0].text) {
               ocrData['company_name'] = lines[0].text;
             }
 
             let dateFound = false;
             for (let i = 0; i < lines.length; i++) {
               let line = lines[i];
-              if (line.words) {
+              if (line && line.words) {
                 let words = line.words;
                 for (let j = 0; j < words.length; j++) {
                   let word = words[j];
@@ -793,13 +793,30 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
   }
 });
 
-receiptRouter.get('/receipts/export', isAuthenticated(), async (req, res, next) => {
+receiptRouter.get('/receipts/export', async (req, res, next) => {
   try {
-    const { user_id } = req.user;
+
+    const { p } = req.query;
+
+    if (!p) {
+      return res.status(401).send({message: 'INVALID_TOKEN'});
+    }
+
+    let decoded = decodeJWT({token: p});
+
+    if (!decoded) {
+      return res.status(401).send({message: 'INVALID_TOKEN'});
+    }
+
+    const { user } = decoded;
+
+    if (!user) {
+      return res.status(401).send({message: 'INVALID_TOKEN'});
+    }
 
     let receipts = await Receipt.findAll({
       where: {
-        user_id: user_id,
+        user_id: user.id,
         deleted: false
       },
       order: [['created_at', 'ASC']],
@@ -830,7 +847,7 @@ receiptRouter.get('/receipts/export', isAuthenticated(), async (req, res, next) 
       receipts.forEach((receipt, index) => {
         let token = '';
         if (receipt.receipt_file) {
-          token = createJWT({ data: {user_id: user_id, receipt_id: receipt.id}})
+          token = createJWT({ data: {user_id: user.id, receipt_id: receipt.id}})
         }
 
         let receiptAmounts = receipt.receipt_amounts;
