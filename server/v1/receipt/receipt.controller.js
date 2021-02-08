@@ -938,7 +938,7 @@ receiptRouter.get(
       if (receipt.receipt_file_id && receipt.receipt_file) {
         let { receipt_file } = receipt;
         let name = receipt_file.id + '_' + receipt_file.name;
-        const fileLocation = `./receipt_docs/${name}_${Math.floor(Math.random() * 1000) + 1}`;
+        const fileLocation = `./receipt_docs/${name}_${Math.floor(Math.random() * 10000) + 1}`;
         await azureStorage.downloadAsFile(name, fileLocation);
 
         let fileTemp = fs.createReadStream(fileLocation);
@@ -947,7 +947,9 @@ receiptRouter.get(
         res.setHeader('Content-Type', receipt_file.mime_type);
         res.setHeader('Content-Disposition', `attachment; filename=${receipt_file.name}`);
         fileTemp.pipe(res);
-        fs.unlinkSync(fileLocation);
+        setTimeout(function () {
+          fs.unlinkSync(fileLocation);
+        }, 10000);
       }
     } catch (e) {
       if (e.message) {
