@@ -10,9 +10,11 @@ const axios = require('axios');
 const sjcl = require('sjcl');
 const ExcelJS = require('exceljs');
 const { serverUrl } = require('../../config');
-import { createJWT, decodeJWT} from '../../common/auth.utils';
+import { createJWT, decodeJWT } from '../../common/auth.utils';
 import { zip_inflate } from './zlib';
 const fs = require('fs');
+const multer = require('multer');
+const upload = multer();
 
 const receiptRouter = Router();
 
@@ -745,7 +747,7 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
             logger.info('EFSTA code missing, using manual OCR');
             let readResult = azureData.analyzeResult.readResults[0];
             let lines = readResult.lines;
-            if (lines[0] &&  lines[0].text) {
+            if (lines[0] && lines[0].text) {
               ocrData['company_name'] = lines[0].text;
             }
 
@@ -795,23 +797,22 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
 
 receiptRouter.get('/receipts/export', async (req, res, next) => {
   try {
-
     const { p } = req.query;
 
     if (!p) {
-      return res.status(401).send({message: 'INVALID_TOKEN'});
+      return res.status(401).send({ message: 'INVALID_TOKEN' });
     }
 
-    let decoded = decodeJWT({token: p});
+    let decoded = decodeJWT({ token: p });
 
     if (!decoded) {
-      return res.status(401).send({message: 'INVALID_TOKEN'});
+      return res.status(401).send({ message: 'INVALID_TOKEN' });
     }
 
     const { user } = decoded;
 
     if (!user) {
-      return res.status(401).send({message: 'INVALID_TOKEN'});
+      return res.status(401).send({ message: 'INVALID_TOKEN' });
     }
 
     let receipts = await Receipt.findAll({
@@ -847,11 +848,12 @@ receiptRouter.get('/receipts/export', async (req, res, next) => {
       receipts.forEach((receipt, index) => {
         let token = '';
         if (receipt.receipt_file) {
-          token = createJWT({ data: {user_id: user.id, receipt_id: receipt.id}})
+          token = createJWT({ data: { user_id: user.id, receipt_id: receipt.id } });
         }
 
         let receiptAmounts = receipt.receipt_amounts;
-        let taxAmount = 0, netAmount = 0;
+        let taxAmount = 0,
+          netAmount = 0;
         receiptAmounts.forEach(amount => {
           taxAmount += amount.tax ? amount.tax : 0;
           netAmount += amount.net ? amount.net : 0;
@@ -870,21 +872,22 @@ receiptRouter.get('/receipts/export', async (req, res, next) => {
           taxAmount,
           netAmount + taxAmount
         ]);
-        let receiptLink = receipt.receipt_file ? `${serverUrl}/receipts/receipt/${receipt.receipt_file.name}/${receipt.id}?p=${token}` : '';
+        let receiptLink = receipt.receipt_file
+          ? `${serverUrl}/receipts/receipt/${receipt.receipt_file.name}/${receipt.id}?p=${token}`
+          : '';
         sheet.getCell(`M${index + 2}`).value = {
           text: receiptLink,
           hyperlink: receiptLink,
           tooltip: receiptLink
         };
-
       });
 
-      sheet.getCell(`G${receiptLength + 2}`).value = { formula: `SUM(G2:G${receiptLength+1})` };
-      sheet.getCell(`H${receiptLength + 2}`).value = { formula: `SUM(H2:H${receiptLength+1})` };
-      sheet.getCell(`I${receiptLength + 2}`).value = { formula: `SUM(I2:I${receiptLength+1})` };
-      sheet.getCell(`J${receiptLength + 2}`).value = { formula: `SUM(J2:J${receiptLength+1})` };
-      sheet.getCell(`K${receiptLength + 2}`).value = { formula: `SUM(K2:K${receiptLength+1})` };
-      sheet.getCell(`L${receiptLength + 2}`).value = { formula: `SUM(L2:L${receiptLength+1})` };
+      sheet.getCell(`G${receiptLength + 2}`).value = { formula: `SUM(G2:G${receiptLength + 1})` };
+      sheet.getCell(`H${receiptLength + 2}`).value = { formula: `SUM(H2:H${receiptLength + 1})` };
+      sheet.getCell(`I${receiptLength + 2}`).value = { formula: `SUM(I2:I${receiptLength + 1})` };
+      sheet.getCell(`J${receiptLength + 2}`).value = { formula: `SUM(J2:J${receiptLength + 1})` };
+      sheet.getCell(`K${receiptLength + 2}`).value = { formula: `SUM(K2:K${receiptLength + 1})` };
+      sheet.getCell(`L${receiptLength + 2}`).value = { formula: `SUM(L2:L${receiptLength + 1})` };
     }
     var fileName = 'Report.xlsx';
 
@@ -904,63 +907,59 @@ receiptRouter.get('/receipts/export', async (req, res, next) => {
   }
 });
 
-receiptRouter.get(
-  '/receipts/receipt/:name/:receipt_id',
-  async (req, res, next) => {
-    try {
-      const { p } = req.query;
+receiptRouter.get('/receipts/receipt/:name/:receipt_id', async (req, res, next) => {
+  try {
+    const { p } = req.query;
 
-      let decoded = decodeJWT({token: p});
+    let decoded = decodeJWT({ token: p });
 
-      if (!decoded) {
-        return res.status(401).send({message: 'INVALID_TOKEN'});
-      }
-      const { receipt_id, user_id } = decoded;
-
-      if (!receipt_id || !user_id) {
-        return res.status(401).send({message: 'INVALID_TOKEN'});
-      }
-      
-
-      const receipt = await Receipt.findOne({
-        where: {
-          id: receipt_id,
-          user_id: user_id,
-          deleted: false
-        },
-        include: [...Receipt.getStandardInclude()]
-      });
-
-      if (!receipt) {
-        return res.status(404).send({ message: 'RECEIPT.UPDATE.NO_EXIST' });
-      }
-
-      if (receipt.receipt_file_id && receipt.receipt_file) {
-        let { receipt_file } = receipt;
-        let name = receipt_file.id + '_' + receipt_file.name;
-        const fileLocation = `./receipt_docs/${name}_${Math.floor(Math.random() * 10000) + 1}`;
-        await azureStorage.downloadAsFile(name, fileLocation);
-
-        let fileTemp = fs.createReadStream(fileLocation);
-        let stat = fs.statSync(fileLocation);
-        res.setHeader('Content-Length', stat.size);
-        res.setHeader('Content-Type', receipt_file.mime_type);
-        res.setHeader('Content-Disposition', `attachment; filename=${receipt_file.name}`);
-        fileTemp.pipe(res);
-        setTimeout(function () {
-          fs.unlinkSync(fileLocation);
-        }, 10000);
-      }
-    } catch (e) {
-      if (e.message) {
-        return res.status(405).send({
-          message: e.message
-        });
-      }
-      return next(e);
+    if (!decoded) {
+      return res.status(401).send({ message: 'INVALID_TOKEN' });
     }
+    const { receipt_id, user_id } = decoded;
+
+    if (!receipt_id || !user_id) {
+      return res.status(401).send({ message: 'INVALID_TOKEN' });
+    }
+
+    const receipt = await Receipt.findOne({
+      where: {
+        id: receipt_id,
+        user_id: user_id,
+        deleted: false
+      },
+      include: [...Receipt.getStandardInclude()]
+    });
+
+    if (!receipt) {
+      return res.status(404).send({ message: 'RECEIPT.UPDATE.NO_EXIST' });
+    }
+
+    if (receipt.receipt_file_id && receipt.receipt_file) {
+      let { receipt_file } = receipt;
+      let name = receipt_file.id + '_' + receipt_file.name;
+      const fileLocation = `./receipt_docs/${name}_${Math.floor(Math.random() * 10000) + 1}`;
+      await azureStorage.downloadAsFile(name, fileLocation);
+
+      let fileTemp = fs.createReadStream(fileLocation);
+      let stat = fs.statSync(fileLocation);
+      res.setHeader('Content-Length', stat.size);
+      res.setHeader('Content-Type', receipt_file.mime_type);
+      res.setHeader('Content-Disposition', `attachment; filename=${receipt_file.name}`);
+      fileTemp.pipe(res);
+      setTimeout(function() {
+        fs.unlinkSync(fileLocation);
+      }, 10000);
+    }
+  } catch (e) {
+    if (e.message) {
+      return res.status(405).send({
+        message: e.message
+      });
+    }
+    return next(e);
   }
-);
+});
 
 function formatDate(date) {
   var d = new Date(date),
@@ -1194,8 +1193,8 @@ receiptRouter.post('/receipt', isAuthenticated(), async (req, res, next) => {
                   let amountParam = {
                     receipt_id: receipt.id,
                     tax_percentage: amount.tax_percentage,
-                    net: amount.net? amount.net : 0,
-                    tax: amount.tax? amount.tax : 0,
+                    net: amount.net ? amount.net : 0,
+                    tax: amount.tax ? amount.tax : 0,
                     sum: amount.sum ? amount.sum : 0,
                     created_by: actual_user_id,
                     modified_by: actual_user_id
@@ -1240,147 +1239,121 @@ receiptRouter.post('/receipt', isAuthenticated(), async (req, res, next) => {
   }
 });
 
-receiptRouter.post('/receipt/:receipt_id', isAuthenticated(), async (req, res, next) => {
-  try {
-    const busboy = new Busboy({ headers: req.headers });
-    const { user_id, actual_user_id } = req.user;
-    const { receipt_id } = req.params;
+receiptRouter.post(
+  '/receipt/:receipt_id',
+  isAuthenticated(),
+  upload.none(),
+  async (req, res, next) => {
+    try {
+      const { user_id, actual_user_id } = req.user;
+      const { receipt_id } = req.params;
 
-    let formData = {};
+      const {
+        company_name,
+        invoice_date,
+        receipt_number,
+        company_payment,
+        note,
+        category,
+        lifelong_warranty,
+        warranty_unit,
+        warranty_value,
+        unlimited_return,
+        return_unit,
+        return_value,
+        paid_with
+      } = req.body;
+      let {amounts} = req.body;
 
-    const existingReceipt = await Receipt.findOne({
-      where: {
-        id: receipt_id
-      }
-    });
+      console.log(req.body, amounts);
 
-    if (!existingReceipt) {
-      return res.status(400).send({
-        message: 'RECEIPT.UPDATE.NO_EXIST'
-      });
-    }
-
-    busboy.on('file', async (fieldName, file, filename, encoding, mime_type) => {
-      try {
-        if (!mime_type || !filename) {
-          return res.status(400).send({ message: 'VAL_FAILED' });
+      const existingReceipt = await Receipt.findOne({
+        where: {
+          id: receipt_id
         }
+      });
 
-        let content = [],
-          fileContent;
-
-        file.on('data', data => {
-          content.push(data);
+      if (!existingReceipt) {
+        return res.status(400).send({
+          message: 'RECEIPT.UPDATE.NO_EXIST'
         });
+      }
 
-        file.on('end', async () => {
-          try {
-            fileContent = Buffer.concat(content);
+      let user = await User.findOne({
+        where: {
+          id: user_id,
+          deleted: false
+        }
+      });
+      let receipt;
+      await sequelize.transaction(async transaction => {
+        await Receipt.update({ deleted: true }, { where: { id: receipt_id }, transaction });
 
-            let fileData;
+        const receiptParams = {
+          user_id: user_id,
+          org_id: user.org_id,
+          receipt_file_id: existingReceipt.receipt_file_id,
+          company_name,
+          invoice_date,
+          receipt_number,
+          company_payment,
+          note,
+          category,
+          lifelong_warranty,
+          warranty_unit,
+          warranty_value,
+          unlimited_return,
+          return_unit,
+          return_value,
+          paid_with,
+          modified_by: actual_user_id,
+          created_by: actual_user_id
+        };
 
-            let user = await User.findOne({
-              where: {
-                id: user_id,
-                deleted: false
-              }
-            });
+        console.log(receiptParams);
 
-            await sequelize.transaction(async transaction => {
-              await Receipt.update({ deleted: true }, { where: { id: receipt_id }, transaction });
+        receipt = await Receipt.create(receiptParams, { transaction });
 
-              const params = {
-                name: filename,
-                extension: encoding,
-                file_size: 0,
-                mime_type: mime_type,
-                location: FileContainers.ATBR,
-                storage_type: StorageType.AZURE,
+        if (amounts) {
+          amounts = JSON.parse(amounts);
+
+          if (amounts.length) {
+            let updatePromises = [];
+            amounts.forEach(amount => {
+              let amountParam = {
+                receipt_id: receipt.id,
+                tax_percentage: amount.tax_percentage,
+                net: amount.net,
+                tax: amount.tax,
+                sum: amount.sum,
                 created_by: actual_user_id,
                 modified_by: actual_user_id
               };
-
-              fileData = await File.create(params, { transaction });
-              const fileName = fileData.id + '_' + fileData.name;
-              await azureStorage.uploadBlob(fileName, fileContent);
-              const receiptParams = {
-                user_id: user_id,
-                org_id: user.org_id,
-                company_name: formData['company_name'],
-                receipt_file_id: fileData.id,
-                invoice_date: formData['invoice_date'],
-                receipt_number: formData['receipt_number'],
-                company_payment: formData['company_payment'],
-                note: formData['note'],
-                category: formData['category'],
-                lifelong_warranty: formData['lifelong_warranty'],
-                warranty_unit: formData['warranty_unit'],
-                warranty_value: formData['warranty_value'],
-                unlimited_return: formData['unlimited_return'],
-                return_unit: formData['return_unit'],
-                return_value: formData['return_value'],
-                paid_with: formData['paid_with'],
-                modified_by: actual_user_id,
-                created_by: actual_user_id
-              };
-
-              const receipt = await Receipt.create(receiptParams, { transaction });
-
-              let amounts = formData['amounts'];
-              if (amounts) {
-                amounts = JSON.parse(amounts);
-
-                if (amounts.length) {
-                  let updatePromises = [];
-                  amounts.forEach(amount => {
-                    let amountParam = {
-                      receipt_id: receipt.id,
-                      tax_percentage: amount.tax_percentage,
-                      net: amount.net,
-                      tax: amount.tax,
-                      sum: amount.sum,
-                      created_by: actual_user_id,
-                      modified_by: actual_user_id
-                    };
-                    updatePromises.push(ReceiptAmount.create(amountParam, { transaction }));
-                  });
-                  await Promise.all(updatePromises);
-                }
-              }
-              return res.send({ message: 'RECEIPT.UPDATE.SUCCESSFUL', data: receipt });
+              updatePromises.push(ReceiptAmount.create(amountParam, { transaction }));
             });
-          } catch (e) {
-            if (e.message) {
-              return res.status(405).send({
-                message: e.message
-              });
-            }
-            return next(e);
+            await Promise.all(updatePromises);
           }
-        });
-      } catch (e) {
-        if (e.message) {
-          return res.status(405).send({
-            message: e.message
-          });
         }
-        return next(e);
-      }
-    });
-
-    busboy.on('field', (fieldName, value) => {
-      formData[fieldName] = value;
-    });
-
-    return req.pipe(busboy);
-  } catch (e) {
-    if (e.message) {
-      return res.status(405).send({
-        message: e.message
       });
+
+      const newReceipt = await Receipt.findOne({
+        where: {
+          id: receipt.id,
+          user_id: user_id,
+          deleted: false
+        },
+        include: [...Receipt.getStandardInclude()]
+      });
+      return res.send({ message: 'RECEIPT.UPDATE.SUCCESSFUL', data: newReceipt });
+    } catch (e) {
+      if (e.message) {
+        return res.status(405).send({
+          message: e.message
+        });
+      }
+      return next(e);
     }
-    return next(e);
   }
-});
+);
 
 export default receiptRouter;
