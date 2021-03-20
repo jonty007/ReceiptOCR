@@ -1384,7 +1384,7 @@ receiptRouter.post(
   }
 );
 
-receiptRoute.delete(
+receiptRouter.delete(
   '/receipt/:receipt_id',
   isAuthenticated(),
   async (req, res, next) => {
