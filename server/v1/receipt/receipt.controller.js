@@ -1318,6 +1318,17 @@ receiptRouter.post(
       await sequelize.transaction(async transaction => {
         await Receipt.update({ deleted: true }, { where: { id: receipt_id }, transaction });
 
+        let tax_sum = 0;
+
+        if (amounts) {
+          amounts = JSON.parse(amounts);
+          if (amounts.length) {
+            amounts.forEach(amount => {
+              tax_sum += amount.sum ? amount.sum : 0;
+            });
+          }
+        }
+
         const receiptParams = {
           user_id: user_id,
           org_id: user.org_id,
@@ -1335,6 +1346,7 @@ receiptRouter.post(
           return_unit,
           return_value,
           paid_with,
+          tax_sum,
           modified_by: actual_user_id,
           created_by: actual_user_id
         };
