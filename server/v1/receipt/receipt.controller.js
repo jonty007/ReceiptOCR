@@ -16,6 +16,7 @@ import { zip_inflate } from './zlib';
 const fs = require('fs');
 const multer = require('multer');
 const upload = multer();
+import moment from 'moment';
 
 const receiptRouter = Router();
 
