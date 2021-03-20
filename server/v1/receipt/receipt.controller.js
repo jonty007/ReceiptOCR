@@ -1354,8 +1354,7 @@ receiptRouter.post(
 
         receipt = await Receipt.create(receiptParams, { transaction });
 
-        if (amounts) {
-          amounts = JSON.parse(amounts);
+        if (amounts && amounts.length) {
 
           if (amounts.length) {
             let updatePromises = [];
