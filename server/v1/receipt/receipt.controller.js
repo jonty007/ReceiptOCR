@@ -9,6 +9,7 @@ const azureVision = require('../../boundaries/azure_vision');
 const axios = require('axios');
 const sjcl = require('sjcl');
 const ExcelJS = require('exceljs');
+import { Op } from 'sequelize';
 const { serverUrl } = require('../../config');
 import { createJWT, decodeJWT } from '../../common/auth.utils';
 import { zip_inflate } from './zlib';
@@ -681,7 +682,33 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
 
           if (formData['QRData']) {
             let qrData = formData['QRData'];
-            extractData(ocrData, qrData);
+            let infoExtracted = extractData(ocrData, qrData);
+
+            // qr data failed, try with efsta
+            if (!infoExtracted) {
+              logger.info('checking if barcode is EFSTA');
+              if (typeof BigInt(qrData) === 'bigint') {
+                let key = sjcl.hash.sha256.hash(qrData);
+                let k = sjcl.hash.sha256.hash(key);
+                let code = sjcl.codec.base64url.fromBits(k);
+                let efstResult = await axios.get(
+                  `https://efsta.net:8084/ext.svc/?index=${code}`
+                );
+                if (efstResult.data && efstResult.data.length != 0) {
+                  logger.info('Scanned barcode is efsta');
+                  let dataString = efstResult.data[0];
+                  let aes = new sjcl.cipher.aes(key);
+                  let enc = sjcl.codec.base64.toBits(dataString);
+                  let dec = sjcl.mode.gcm.decrypt(aes, enc, [0, 0, 0], []);
+                  let zip_inflate_data_length = sjcl.bitArray.bitLength(dec) / 8;
+                  let finalResult = zip_inflate(dec, zip_inflate_data_length);
+                  let efstaQrData = JSON.parse(finalResult);
+                  extractData(ocrData, efstaQrData['QR']);
+                }
+              }
+            } else {
+              logger.info('scanned code was valid QR');
+            }
           }
 
           let azureData = {};
@@ -797,7 +824,7 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
 
 receiptRouter.get('/receipts/export', async (req, res, next) => {
   try {
-    const { p } = req.query;
+    const { p, invoice_date_start, invoice_date_end } = req.query;
 
     if (!p) {
       return res.status(401).send({ message: 'INVALID_TOKEN' });
@@ -818,7 +845,10 @@ receiptRouter.get('/receipts/export', async (req, res, next) => {
     let receipts = await Receipt.findAll({
       where: {
         user_id: user.id,
-        deleted: false
+        deleted: false,
+        invoice_date: {
+          [Op.between]: [moment.utc(invoice_date_start, 'YYYY-MM-DD'), moment.utc(invoice_date_end, 'YYYY-MM-DD')]
+        },
       },
       order: [['created_at', 'ASC']],
       include: [...Receipt.getStandardInclude()]
@@ -1098,6 +1128,8 @@ function extractData(ocrData, qrData) {
         });
       }
     }
+  } else {
+    return false;
   }
 }
 
@@ -1123,6 +1155,9 @@ receiptRouter.post('/receipt', isAuthenticated(), async (req, res, next) => {
 
         file.on('end', async () => {
           try {
+            if (!formData['company_name'] || !formData['invoice_date']) {
+              throw new Error('Company name and invoice date is required');
+            }
             fileContent = Buffer.concat(content);
 
             let fileData;
@@ -1206,12 +1241,7 @@ receiptRouter.post('/receipt', isAuthenticated(), async (req, res, next) => {
               return res.send({ message: 'UPLOAD.SUCCESSFUL', data: receipt });
             });
           } catch (e) {
-            if (e.message) {
-              return res.status(405).send({
-                message: e.message
-              });
-            }
-            return next(e);
+            throw new Error(e.message);
           }
         });
       } catch (e) {
