@@ -46,5 +46,6 @@
   "RECEIPT_GET.SUCCESSFUL": "Receipt retrieved  successfully",
   "RECEIPT.UPDATE.ERROR": "Error occurred while updating receipt.",
   "RECEIPT.UPDATE.NO_EXIST": "No receipt found for this id.",
-  "RECEIPT.UPDATE.SUCCESSFUL": "Receipt updated successfully."
+  "RECEIPT.UPDATE.SUCCESSFUL": "Receipt updated successfully.",
+  "RECEIPT.DELETE.SUCCESSFUL": "Receipt deleted successfully."
 }

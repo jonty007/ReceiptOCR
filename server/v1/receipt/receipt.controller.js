@@ -1295,7 +1295,6 @@ receiptRouter.post(
       } = req.body;
       let {amounts} = req.body;
 
-      console.log(req.body, amounts);
 
       const existingReceipt = await Receipt.findOne({
         where: {
@@ -1340,7 +1339,6 @@ receiptRouter.post(
           created_by: actual_user_id
         };
 
-        console.log(receiptParams);
 
         receipt = await Receipt.create(receiptParams, { transaction });
 
@@ -1375,6 +1373,41 @@ receiptRouter.post(
         include: [...Receipt.getStandardInclude()]
       });
       return res.send({ message: 'RECEIPT.UPDATE.SUCCESSFUL', data: newReceipt });
+    } catch (e) {
+      if (e.message) {
+        return res.status(405).send({
+          message: e.message
+        });
+      }
+      return next(e);
+    }
+  }
+);
+
+receiptRoute.delete(
+  '/receipt/:receipt_id',
+  isAuthenticated(),
+  async (req, res, next) => {
+    try {
+      const { actual_user_id } = req.user;
+      const { receipt_id } = req.params;
+
+
+      const existingReceipt = await Receipt.findOne({
+        where: {
+          id: receipt_id
+        }
+      });
+
+      if (!existingReceipt) {
+        return res.status(400).send({
+          message: 'RECEIPT.UPDATE.NO_EXIST'
+        });
+      }
+      await sequelize.transaction(async transaction => {
+        await Receipt.update({ deleted: true, modified_by: actual_user_id }, { where: { id: receipt_id }, transaction });
+      });
+      return res.send({ message: 'RECEIPT.DELETE.SUCCESSFUL' });
     } catch (e) {
       if (e.message) {
         return res.status(405).send({
