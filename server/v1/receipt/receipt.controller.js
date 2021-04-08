@@ -688,7 +688,7 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
             // qr data failed, try with efsta
             if (!infoExtracted) {
               logger.info('checking if barcode is EFSTA');
-              if (typeof BigInt(qrData) === 'bigint') {
+              if (/^\d+$/.test(qrData) && typeof BigInt(qrData) === 'bigint') {
                 let key = sjcl.hash.sha256.hash(qrData);
                 let k = sjcl.hash.sha256.hash(key);
                 let code = sjcl.codec.base64url.fromBits(k);
@@ -739,7 +739,7 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
                 for (let i = 0; i < efstaNumbers.length; i++) {
                   let number = efstaNumbers[i];
                   try {
-                    if (typeof BigInt(number) === 'bigint') {
+                    if (/^\d+$/.test(number) && typeof BigInt(number) === 'bigint') {
                       let key = sjcl.hash.sha256.hash(number);
                       let k = sjcl.hash.sha256.hash(key);
                       let code = sjcl.codec.base64url.fromBits(k);
