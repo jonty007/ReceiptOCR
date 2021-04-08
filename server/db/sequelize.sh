@@ -42,6 +42,7 @@ npx sequelize-cli model:generate --name Receipt --underscored true --attributes 
 npx sequelize-cli model:generate --name DurationUnit --underscored true --attributes label:string,value:string,sequence:integer
 npx sequelize-cli migration:generate --name add-receipt-sumColumn
 npx sequelize-cli migration:generate --name change-receipt-datetime-to-date
+npx sequelize-cli migration:generate --name add-subscription-plan
 
 ####################### FILES END #############################################
 

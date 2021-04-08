@@ -38,9 +38,11 @@ async function createStripePayment(payment_details, user, transaction) {
       throw new Error('Invalid User');
     }
 
-    if (!user_details.customer_id) {
-      user_details.customer_id = await createStripeCustomer(user_details.email, user_details);
-      ({ customer_id } = user_details);
+    if (!user_details.stripe_customer_id) {
+      user_details.stripe_customer_id = await createStripeCustomer(user_details.email, user_details);
+      customer_id = user_details.stripe_customer_id;
+    } else {
+      customer_id = user_details.stripe_customer_id;
     }
     let plan_details = await SubscriptionPlan.findOne({
       where: {
@@ -66,7 +68,6 @@ async function createStripePayment(payment_details, user, transaction) {
         }
       ]
     });
-    logger.debug('customer id ::', customer_id);
     return { customer_id, card_id, source_id: source_res.id, subscription_id: results.id };
   } catch (error) {
     throw new Error(error);
@@ -76,9 +77,9 @@ async function createStripePayment(payment_details, user, transaction) {
 export async function createPayment(payment_details, transaction) {
   try {
     let { user_id, subscription_plan_id, payment_type } = payment_details;
+    let user_details = await User.findOne({ where: { id: user_id } }, transaction);
     let subscription_details = await createStripePayment(payment_details, { user_id }, transaction);
     let { card_id, customer_id, subscription_id, source_id } = subscription_details;
-    let user_details = await User.findOne({ where: { id: user_id } }, transaction);
     if (user_details.status === UserStatus.VERIFICATION_PENDING) {
       throw new Error('Invalid');
     }
@@ -108,6 +109,8 @@ export async function createPayment(payment_details, transaction) {
         status: UserStatus.VERIFICATION_PENDING,
         stripe_card_id: subscription_details.card_id,
         stripe_customer_id: subscription_details.customer_id,
+        subscription_plan: subscription_plan_id,
+        subscription_id: subscription_id,
         modified_by: user_id
       },
       { transaction, where: { id: user_details.id } }
@@ -236,11 +239,18 @@ export async function getPaymentInformation(body, user) {
 
 export async function cancelSubscription(body) {
   try {
-    let { subscription_id } = body;
+    let { subscription_id, actual_user_id } = body;
     let subscription_details = await client.subscriptions.update(subscription_id, {
       cancel_at_period_end: true
     });
 
+    await User.update({
+      subscription_plan: 1
+    }, {
+      where: {
+        id: actual_user_id
+      }
+    })
     return subscription_details;
   } catch (error) {
     throw new Error(error.message);

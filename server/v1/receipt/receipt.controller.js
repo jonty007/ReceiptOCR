@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { Receipt, User, File, ReceiptAmount, sequelize } from '../../db';
 import Busboy from 'busboy';
 import { isAuthenticated } from '../../middlewares';
-import { StorageType, FileContainers } from '../../common/Mappings';
+import { StorageType, FileContainers, UserTypes } from '../../common/Mappings';
 import { logger } from '../../app/app.logger';
 const azureStorage = require('../../boundaries/azure_storage');
 const azureVision = require('../../boundaries/azure_vision');
@@ -688,7 +688,7 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
             // qr data failed, try with efsta
             if (!infoExtracted) {
               logger.info('checking if barcode is EFSTA');
-              if (typeof BigInt(qrData) === 'bigint') {
+              if (/^\d+$/.test(qrData) && typeof BigInt(qrData) === 'bigint') {
                 let key = sjcl.hash.sha256.hash(qrData);
                 let k = sjcl.hash.sha256.hash(key);
                 let code = sjcl.codec.base64url.fromBits(k);
@@ -1170,6 +1170,14 @@ receiptRouter.post('/receipt', isAuthenticated(), async (req, res, next) => {
               }
             });
 
+            let orgAdmin = await User.findOne({
+              where:  {
+                id: user.org_id,
+                user_type: UserTypes.ORGANIZATION_ADMIN,
+                deleted: false
+              }
+            })
+
             await sequelize.transaction(async transaction => {
               const params = {
                 name: filename,
@@ -1184,7 +1192,11 @@ receiptRouter.post('/receipt', isAuthenticated(), async (req, res, next) => {
 
               fileData = await File.create(params, { transaction });
               const fileName = fileData.id + '_' + fileData.name;
-              await azureStorage.uploadBlob(fileName, fileContent);
+
+              if (user.subscription_plan !== 1 || (orgAdmin && orgAdmin.subscription_plan !== 1)) {
+                console.log('user admin or user of org');
+                await azureStorage.uploadBlob(fileName, fileContent);
+              }
 
               let tax_sum = 0;
               let amounts = formData['amounts'];

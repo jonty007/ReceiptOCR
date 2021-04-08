@@ -32,40 +32,6 @@ payment.get('/payment/plans', async (req, res, next) => {
 });
 
 /**
- * @api {get} /payment/:id  Find payment details by payment id
- * @apiName FindPayment
- * @apiGroup Payment
- * @apiHeader {String} authorization Users unique access-key.
- *
- */
-payment.get('/payment/:payment_id', isAuthenticated(), async (req, res, next) => {
-  try {
-    const { card_id } = req.body,
-      { payment_id } = req.params;
-
-    if (!payment_id || !card_id) {
-      return res.status(405).send({
-        message: 'VAL_FAILED'
-      });
-    }
-
-    let org = await getPaymentInformation(
-      { card_id, payment_id },
-      { user_id: req.user.actual_user_id }
-    );
-
-    return res.send(org);
-  } catch (e) {
-    if (e.message) {
-      return res.status(405).send({
-        message: e.message
-      });
-    }
-    return next(e);
-  }
-});
-
-/**
  * @api {post} /payment  Creates a new payment
  * @apiName CreatePayment
  * @apiGroup Payment
@@ -164,9 +130,42 @@ payment.get('/payment/card-details', isAuthenticated(), async (req, res, next) =
  */
 payment.post('/payment/cancel', isAuthenticated(), async (req, res, next) => {
   try {
-    const { card_id } = req.body;
+    const { subscription_id } = req.body;
+    const {actual_user_id} = req.user;
+    let org = await cancelSubscription({ subscription_id, actual_user_id });
+    return res.send(org);
+  } catch (e) {
+    if (e.message) {
+      return res.status(405).send({
+        message: e.message
+      });
+    }
+    return next(e);
+  }
+});
 
-    let org = await cancelSubscription({ card_id });
+/**
+ * @api {get} /payment/:id  Find payment details by payment id
+ * @apiName FindPayment
+ * @apiGroup Payment
+ * @apiHeader {String} authorization Users unique access-key.
+ *
+ */
+payment.get('/payment/:payment_id', isAuthenticated(), async (req, res, next) => {
+  try {
+    const { card_id } = req.body,
+      { payment_id } = req.params;
+
+    if (!payment_id || !card_id) {
+      return res.status(405).send({
+        message: 'VAL_FAILED'
+      });
+    }
+
+    let org = await getPaymentInformation(
+      { card_id, payment_id },
+      { user_id: req.user.actual_user_id }
+    );
 
     return res.send(org);
   } catch (e) {
