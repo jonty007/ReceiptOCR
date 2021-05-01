@@ -43,7 +43,7 @@ receiptRouter.get('/receipt/user', isAuthenticated(), async (req, res, next) => 
         user_id: user_id,
         deleted: false
       },
-      order: [['created_at', 'ASC']],
+      order: [['created_at', 'DESC']],
       include: [...Receipt.getStandardInclude()]
     });
 
@@ -148,7 +148,7 @@ receiptRouter.get('/report/category', isAuthenticated(), async (req, res, next) 
         user_id: user_id,
         deleted: false
       },
-      order: [['created_at', 'ASC']],
+      order: [['created_at', 'DESC']],
       include: [...Receipt.getStandardInclude()]
     });
 
@@ -268,7 +268,7 @@ receiptRouter.get('/report/payment_type', isAuthenticated(), async (req, res, ne
         user_id: user_id,
         deleted: false
       },
-      order: [['created_at', 'ASC']],
+      order: [['created_at', 'DESC']],
       include: [...Receipt.getStandardInclude()]
     });
 
@@ -388,7 +388,7 @@ receiptRouter.get('/report/vat', isAuthenticated(), async (req, res, next) => {
         user_id: user_id,
         deleted: false
       },
-      order: [['created_at', 'ASC']],
+      order: [['created_at', 'DESC']],
       include: [...Receipt.getStandardInclude()]
     });
 
@@ -684,7 +684,7 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
           if (formData['QRData']) {
             let qrData = formData['QRData'];
             let infoExtracted = extractData(ocrData, qrData);
-
+            console.log('info extracted: ', infoExtracted);
             // qr data failed, try with efsta
             if (!infoExtracted) {
               logger.info('checking if barcode is EFSTA');
@@ -739,7 +739,7 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
                 for (let i = 0; i < efstaNumbers.length; i++) {
                   let number = efstaNumbers[i];
                   try {
-                    if (typeof BigInt(number) === 'bigint') {
+                    if (/^\d+$/.test(number) && typeof BigInt(number) === 'bigint') {
                       let key = sjcl.hash.sha256.hash(number);
                       let k = sjcl.hash.sha256.hash(key);
                       let code = sjcl.codec.base64url.fromBits(k);
@@ -747,6 +747,7 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
                         `https://efsta.net:8084/ext.svc/?index=${code}`
                       );
                       if (efstResult.data && efstResult.data.length != 0) {
+                        logger.info('found efsta result from OCR');
                         let dataString = efstResult.data[0];
                         let aes = new sjcl.cipher.aes(key);
                         let enc = sjcl.codec.base64.toBits(dataString);
@@ -851,7 +852,7 @@ receiptRouter.get('/receipts/export', async (req, res, next) => {
           [Op.between]: [moment.utc(invoice_date_start, 'YYYY-MM-DD'), moment.utc(invoice_date_end, 'YYYY-MM-DD')]
         },
       },
-      order: [['created_at', 'ASC']],
+      order: [['created_at', 'DESC']],
       include: [...Receipt.getStandardInclude()]
     });
 
@@ -1128,7 +1129,9 @@ function extractData(ocrData, qrData) {
           sum: amount
         });
       }
+      return true;
     }
+    return false;
   } else {
     return false;
   }
