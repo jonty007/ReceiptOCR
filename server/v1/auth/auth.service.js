@@ -60,6 +60,7 @@ export async function signUpUser(data, transaction) {
         last_name,
         org_id: org_id,
         user_type: user_type,
+        subscription_plan: data.subscription_plan_id ? data.subscription_plan_id : null,
         status,
         // using 0 as system is creating this for the first time, can change according to need
         created_by: 0,

@@ -49,6 +49,12 @@ module.exports = (sequelize, DataTypes) => {
           allowNull: false,
           defaultValue: 0
         },
+        subscription_plan: {
+          type: DataTypes.INTEGER
+        },
+        subscription_id: {
+          type: DataTypes.STRING
+        },
         stripe_customer_id: {
           type: DataTypes.STRING
         },
