@@ -1175,7 +1175,7 @@ receiptRouter.post('/receipt', isAuthenticated(), async (req, res, next) => {
 
             let orgAdmin = await User.findOne({
               where:  {
-                id: user.org_id,
+                org_id: user.org_id,
                 user_type: UserTypes.ORGANIZATION_ADMIN,
                 deleted: false
               }

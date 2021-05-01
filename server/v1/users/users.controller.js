@@ -49,6 +49,14 @@ users.get('/user/me', isAuthenticated(), async (req, res, next) => {
 
     const org = user.org;
 
+    let orgAdmin = await User.findOne({
+      where:  {
+        org_id: user.org_id,
+        user_type: UserTypes.ORGANIZATION_ADMIN,
+        deleted: false
+      }
+    });
+
     if (org && org.companyLogo && org.companyLogo.content) {
       let companyLogo  = org.companyLogo;
       let base64 = `data:${companyLogo.mime_type};base64,${companyLogo.content.toString('base64')}`;
@@ -63,6 +71,8 @@ users.get('/user/me', isAuthenticated(), async (req, res, next) => {
       user.profilePicture.base64 = base64;
       user.profilePicture.content = null;
     }
+
+    user.orgAdmin = orgAdmin;
 
     return res.send(user);
   } catch (e) {
