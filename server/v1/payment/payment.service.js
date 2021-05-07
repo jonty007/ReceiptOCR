@@ -240,14 +240,14 @@ export async function getPaymentInformation(body, user) {
 export async function cancelSubscription(body) {
   try {
 
+    let { subscription_id, actual_user_id } = body;
+    
     const user = await User.findOne({
       where: {
         id: actual_user_id,
         deleted: false
       }
     });
-
-    let { subscription_id, actual_user_id } = body;
 
     if (user.subscription_id !== subscription_id) {
       throw new Error('Invalid subscription');
