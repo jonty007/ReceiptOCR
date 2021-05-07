@@ -106,7 +106,7 @@ export async function createPayment(payment_details, transaction) {
 
     await User.update(
       {
-        status: UserStatus.VERIFICATION_PENDING,
+        status: user_details.status === UserStatus.ACTIVE ? UserStatus.ACTIVE : UserStatus.VERIFICATION_PENDING,
         stripe_card_id: subscription_details.card_id,
         stripe_customer_id: subscription_details.customer_id,
         subscription_plan: subscription_plan_id,
