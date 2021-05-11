@@ -43,7 +43,7 @@ receiptRouter.get('/receipt/user', isAuthenticated(), async (req, res, next) => 
         user_id: user_id,
         deleted: false
       },
-      order: [['created_at', 'DESC']],
+      order: [['invoice_date', 'DESC']],
       include: [...Receipt.getStandardInclude()]
     });
 
@@ -148,7 +148,7 @@ receiptRouter.get('/report/category', isAuthenticated(), async (req, res, next) 
         user_id: user_id,
         deleted: false
       },
-      order: [['created_at', 'DESC']],
+      order: [['invoice_date', 'DESC']],
       include: [...Receipt.getStandardInclude()]
     });
 
@@ -268,7 +268,7 @@ receiptRouter.get('/report/payment_type', isAuthenticated(), async (req, res, ne
         user_id: user_id,
         deleted: false
       },
-      order: [['created_at', 'DESC']],
+      order: [['invoice_date', 'DESC']],
       include: [...Receipt.getStandardInclude()]
     });
 
@@ -388,7 +388,7 @@ receiptRouter.get('/report/vat', isAuthenticated(), async (req, res, next) => {
         user_id: user_id,
         deleted: false
       },
-      order: [['created_at', 'DESC']],
+      order: [['invoice_date', 'DESC']],
       include: [...Receipt.getStandardInclude()]
     });
 
@@ -852,7 +852,7 @@ receiptRouter.get('/receipts/export', async (req, res, next) => {
           [Op.between]: [moment.utc(invoice_date_start, 'YYYY-MM-DD'), moment.utc(invoice_date_end, 'YYYY-MM-DD')]
         },
       },
-      order: [['created_at', 'DESC']],
+      order: [['invoice_date', 'DESC']],
       include: [...Receipt.getStandardInclude()]
     });
 
