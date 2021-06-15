@@ -1,8 +1,7 @@
 import { logger } from '../app/app.logger';
 
-const ComputerVisionClient = require('@azure/cognitiveservices-computervision')
-  .ComputerVisionClient;
-const ApiKeyCredentials = require('@azure/ms-rest-js').ApiKeyCredentials;
+const { ComputerVisionClient } = require('@azure/cognitiveservices-computervision');
+const { ApiKeyCredentials } = require('@azure/ms-rest-js');
 const sleep = require('util').promisify(setTimeout);
 
 let config, client;
@@ -22,7 +21,7 @@ const init = function(azure) {
     }
   },
   extractReceipt = async function(receiptStream) {
-    try  {
+    try {
       let result = await client.readInStream(receiptStream);
       let operation = result.operationLocation.split('/').slice(-1)[0];
 
@@ -31,8 +30,8 @@ const init = function(azure) {
       while (result.status !== 'succeeded') {
         if (result.status === 'failed' || count >= 10) {
           break;
-        } 
-        
+        }
+
         await sleep(1000);
         result = await client.getReadResult(operation);
         count++;

@@ -131,7 +131,7 @@ payment.get('/payment/card-details', isAuthenticated(), async (req, res, next) =
 payment.post('/payment/cancel', isAuthenticated(), async (req, res, next) => {
   try {
     const { subscription_id } = req.body;
-    const {actual_user_id} = req.user;
+    const { actual_user_id } = req.user;
     let org = await cancelSubscription({ subscription_id, actual_user_id });
     return res.send(org);
   } catch (e) {

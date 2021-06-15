@@ -6,9 +6,9 @@
 module.exports = {
   database: {
     username: 'vivek',
-    password: 'testocr$15',
-    name: 'preceipttest', // DB name
-    host: 'preceipt.database.windows.net',
+    password: '*',
+    name: '*', // DB name
+    host: '*',
     port: 1433,
     dialect: 'mssql',
     migrationStorage: 'sequelize',
@@ -53,7 +53,7 @@ module.exports = {
   //   nonce: // non key
   //   secret_key: // secret key
   //  },
-  stripe: 'sk_test_51HbrXVFJ4dMQPQR28zRrfi3wnNASSlgOn2KCYZAfsdjcYKJ3EF6zpAMZhd6DyHHrkJ48vXtVj8qva57H24yPQqkm00X6G1msrB',
+  stripe: '*',
   mail: 'smtp',
   smtp: {
     pool: true,
@@ -61,8 +61,8 @@ module.exports = {
     port: 587,
     secure: false,
     auth: {
-      user: 'vivek.singh@quanteon.in',
-      pass: 'MGQHfka0zE5cTBxt'
+      user: '*',
+      pass: '*'
     }
   },
 
@@ -72,17 +72,17 @@ module.exports = {
   },
 
   mailOptions: {
-    from: 'vivek.singh@quanteon.in',
-    replyTo: 'vivek.singh@quanteon.in'
+    from: '*',
+    replyTo: '*'
   },
 
   emailDetails: {
-    supportEmail: 'vivek.singh@quanteon.in',
+    supportEmail: '*',
     appName: 'App'
   },
 
   host: 'http://localhost:4001/client',
-  serverUrl: 'https://preceipt1.azurewebsites.net/api/v1',
+  serverUrl: '*',
   https: false,
   http: {},
   client: true,
@@ -96,36 +96,36 @@ module.exports = {
       clientId: '',
       tenantId: ''
     },
-    baseGraphURL: 'https://graph.microsoft.com',
+    baseGraphURL: '*',
     userInfo: '/v1.0/me',
     recognizer: {
-      endpoint: 'https://preceiptocrdev.cognitiveservices.azure.com/',
-      key: '59a64e59ea9b458c95025a3017faa84f'
+      endpoint: '*',
+      key: '*'
     },
     vision: {
-      key: '9391b7d7d43449c58f27c173147df09a',
-      endpoint: 'https://preceiptvision.cognitiveservices.azure.com/'
+      key: '*',
+      endpoint: '*'
     },
     storage: {
-      baseURL: 'https://pdocs.blob.core.windows.net',
-      accountName: 'pdocs',
-      key: 'TYHLdNmnPbYqR9M31m4mv2jsqMzvt77pHY7AJJS7lb6WHNU+GCwn23cn+QuF7NuDc5RwIx5JNIK/R5YpCLtdMw==',
-      connectionString: 'DefaultEndpointsProtocol=https;AccountName=pdocs;AccountKey=TYHLdNmnPbYqR9M31m4mv2jsqMzvt77pHY7AJJS7lb6WHNU+GCwn23cn+QuF7NuDc5RwIx5JNIK/R5YpCLtdMw==;EndpointSuffix=core.windows.net',
-      containerName: 'pdocs' // This name may only contain lowercase letters, numbers, and hyphens, and must begin with a letter or a number. Each hyphen must be preceded and followed by a non-hyphen character. The name must also be between 3 and 63 characters long.
+      baseURL: '*',
+      accountName: '*',
+      key: '*',
+      connectionString: '*',
+      containerName: '*' // This name may only contain lowercase letters, numbers, and hyphens, and must begin with a letter or a number. Each hyphen must be preceded and followed by a non-hyphen character. The name must also be between 3 and 63 characters long.
     }
   },
   firebase: {
-    api: "https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=AIzaSyCRciNM3ESX_8Sj3ezMPZcdpd_82gj9Dq0",
-    link: "https://preceipt-app.web.app",
+    api: "*",
+    link: "*",
     config: {
       "dynamicLinkInfo": {
-        "domainUriPrefix": "https://preceipt.page.link",
-        "link": "https://preceipt-app.web.app",
+        "domainUriPrefix": "*",
+        "link": "*",
         "androidInfo": {
-          "androidPackageName": "at.pits.preceipt",
+          "androidPackageName": "*",
         },
         "iosInfo": {
-          "iosBundleId": "at.pits.preceipt",
+          "iosBundleId": "*",
         },
         "navigationInfo": {
           "enableForcedRedirect": true

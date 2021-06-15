@@ -632,7 +632,6 @@ receiptRouter.get(
 receiptRouter.post('/receiptqr', isAuthenticated(), async (req, res, next) => {
   try {
     const busboy = new Busboy({ headers: req.headers });
-    const { user_id } = req.user;
 
     busboy.on('file', async (fieldName, file, filename, encoding, mime_type) => {
       if (!mime_type || !filename) {
@@ -657,7 +656,6 @@ receiptRouter.post('/receiptqr', isAuthenticated(), async (req, res, next) => {
 receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
   try {
     const busboy = new Busboy({ headers: req.headers });
-    const { user_id } = req.user;
 
     const formData = {};
 
@@ -692,9 +690,7 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
                 let key = sjcl.hash.sha256.hash(qrData);
                 let k = sjcl.hash.sha256.hash(key);
                 let code = sjcl.codec.base64url.fromBits(k);
-                let efstResult = await axios.get(
-                  `https://efsta.net:8084/ext.svc/?index=${code}`
-                );
+                let efstResult = await axios.get(`https://efsta.net:8084/ext.svc/?index=${code}`);
                 if (efstResult.data && efstResult.data.length != 0) {
                   logger.info('Scanned barcode is efsta');
                   let dataString = efstResult.data[0];
@@ -719,7 +715,7 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
             azureData = await azureVision.extractReceipt(fileContent);
             if (azureData && azureData.analyzeResult && azureData.analyzeResult.readResults) {
               let readResult = azureData.analyzeResult.readResults[0];
-              let lines = readResult.lines;
+              let { lines } = readResult;
               let efstaNumbers = [];
               lines.forEach(line => {
                 if (line.text) {
@@ -775,7 +771,7 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
           ) {
             logger.info('EFSTA code missing, using manual OCR');
             let readResult = azureData.analyzeResult.readResults[0];
-            let lines = readResult.lines;
+            let { lines } = readResult;
             if (lines[0] && lines[0].text) {
               ocrData['company_name'] = lines[0].text;
             }
@@ -784,7 +780,7 @@ receiptRouter.post('/receiptocr', isAuthenticated(), async (req, res, next) => {
             for (let i = 0; i < lines.length; i++) {
               let line = lines[i];
               if (line && line.words) {
-                let words = line.words;
+                let { words } = line;
                 for (let j = 0; j < words.length; j++) {
                   let word = words[j];
                   if (checkForDate(word.text)) {
@@ -849,8 +845,11 @@ receiptRouter.get('/receipts/export', async (req, res, next) => {
         user_id: user.id,
         deleted: false,
         invoice_date: {
-          [Op.between]: [moment.utc(invoice_date_start, 'YYYY-MM-DD'), moment.utc(invoice_date_end, 'YYYY-MM-DD')]
-        },
+          [Op.between]: [
+            moment.utc(invoice_date_start, 'YYYY-MM-DD'),
+            moment.utc(invoice_date_end, 'YYYY-MM-DD')
+          ]
+        }
       },
       order: [['invoice_date', 'DESC']],
       include: [...Receipt.getStandardInclude()]
@@ -921,7 +920,7 @@ receiptRouter.get('/receipts/export', async (req, res, next) => {
       sheet.getCell(`K${receiptLength + 2}`).value = { formula: `SUM(K2:K${receiptLength + 1})` };
       sheet.getCell(`L${receiptLength + 2}`).value = { formula: `SUM(L2:L${receiptLength + 1})` };
     }
-    var fileName = 'Report.xlsx';
+    let fileName = 'Report.xlsx';
 
     res.setHeader(
       'Content-Type',
@@ -994,13 +993,17 @@ receiptRouter.get('/receipts/receipt/:name/:receipt_id', async (req, res, next) 
 });
 
 function formatDate(date) {
-  var d = new Date(date),
+  let d = new Date(date),
     month = '' + (d.getMonth() + 1),
     day = '' + d.getDate(),
     year = d.getFullYear();
 
-  if (month.length < 2) month = '0' + month;
-  if (day.length < 2) day = '0' + day;
+  if (month.length < 2) {
+    month = '0' + month;
+  }
+  if (day.length < 2) {
+    day = '0' + day;
+  }
 
   return [year, month, day].join('-');
 }
@@ -1174,12 +1177,12 @@ receiptRouter.post('/receipt', isAuthenticated(), async (req, res, next) => {
             });
 
             let orgAdmin = await User.findOne({
-              where:  {
+              where: {
                 org_id: user.org_id,
                 user_type: UserTypes.ORGANIZATION_ADMIN,
                 deleted: false
               }
-            })
+            });
 
             await sequelize.transaction(async transaction => {
               const params = {
@@ -1309,8 +1312,7 @@ receiptRouter.post(
         return_value,
         paid_with
       } = req.body;
-      let {amounts} = req.body;
-
+      let { amounts } = req.body;
 
       const existingReceipt = await Receipt.findOne({
         where: {
@@ -1367,11 +1369,9 @@ receiptRouter.post(
           created_by: actual_user_id
         };
 
-
         receipt = await Receipt.create(receiptParams, { transaction });
 
         if (amounts && amounts.length) {
-
           if (amounts.length) {
             let updatePromises = [];
             amounts.forEach(amount => {
@@ -1411,39 +1411,37 @@ receiptRouter.post(
   }
 );
 
-receiptRouter.delete(
-  '/receipt/:receipt_id',
-  isAuthenticated(),
-  async (req, res, next) => {
-    try {
-      const { actual_user_id } = req.user;
-      const { receipt_id } = req.params;
+receiptRouter.delete('/receipt/:receipt_id', isAuthenticated(), async (req, res, next) => {
+  try {
+    const { actual_user_id } = req.user;
+    const { receipt_id } = req.params;
 
-
-      const existingReceipt = await Receipt.findOne({
-        where: {
-          id: receipt_id
-        }
-      });
-
-      if (!existingReceipt) {
-        return res.status(400).send({
-          message: 'RECEIPT.UPDATE.NO_EXIST'
-        });
+    const existingReceipt = await Receipt.findOne({
+      where: {
+        id: receipt_id
       }
-      await sequelize.transaction(async transaction => {
-        await Receipt.update({ deleted: true, modified_by: actual_user_id }, { where: { id: receipt_id }, transaction });
+    });
+
+    if (!existingReceipt) {
+      return res.status(400).send({
+        message: 'RECEIPT.UPDATE.NO_EXIST'
       });
-      return res.send({ message: 'RECEIPT.DELETE.SUCCESSFUL' });
-    } catch (e) {
-      if (e.message) {
-        return res.status(405).send({
-          message: e.message
-        });
-      }
-      return next(e);
     }
+    await sequelize.transaction(async transaction => {
+      await Receipt.update(
+        { deleted: true, modified_by: actual_user_id },
+        { where: { id: receipt_id }, transaction }
+      );
+    });
+    return res.send({ message: 'RECEIPT.DELETE.SUCCESSFUL' });
+  } catch (e) {
+    if (e.message) {
+      return res.status(405).send({
+        message: e.message
+      });
+    }
+    return next(e);
   }
-);
+});
 
 export default receiptRouter;

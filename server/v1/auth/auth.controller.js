@@ -416,7 +416,7 @@ auth.post('/auth/login', async (req, res, next) => {
       user: {
         id,
         actual_user_id: id,
-        name: `${user.first_name.trim()}${user.last_name ? (' ' + user.last_name.trim()) : ''}`,
+        name: `${user.first_name.trim()}${user.last_name ? ' ' + user.last_name.trim() : ''}`,
         org_name: `${user.org ? user.org.name : null}`
       }
     });

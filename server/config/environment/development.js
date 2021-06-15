@@ -5,17 +5,24 @@
 
 module.exports = {
   database: {
-    username: 'smyjefot',
-    password: 'LxWNFTnhxdyq-ZNV13eur9E9kyr84LQj',
-    name: 'smyjefot', // DB name
-    host: 'ruby.db.elephantsql.com',
-    port: 5432,
-    dialect: 'postgres',
+    username: 'vivek',
+    password: '*',
+    name: '*', // DB name
+    host: '*',
+    port: 1433,
+    dialect: 'mssql',
     migrationStorage: 'sequelize',
     seederStorage: 'sequelize',
-    migrationStorageTableSchema: 'custom',
-    schema: 'custom',
+    migrationStorageTableSchema: 'dbo',
+    schema: 'dbo',
     connectionLimit: 10,
+    dialectOptions: {
+      options: {
+      encrypt: true,
+      enableArithAbort: true,
+      trustServerCertificate: true
+      }
+    },
     pool: {
       max: 5,
       min: 0,
@@ -45,17 +52,17 @@ module.exports = {
   //   algorithm: // algo: aes-256-gcm
   //   nonce: // non key
   //   secret_key: // secret key
-  // },
-  stripe: 'sk_test_51HaiBLIDwFeEHEEAr8SMmYp9AlbqUhzGTJCkTg40e1XPyS4xdb2FaE0lsPcdmSj1Oz2CmshHMBohLXZT95a9K4J300LWTNBsWJ',
+  //  },
+  stripe: '*',
   mail: 'smtp',
   smtp: {
     pool: true,
-    host: 'smtp.gmail.com',
+    host: 'smtp-relay.sendinblue.com',
     port: 587,
     secure: false,
     auth: {
-      user: 'raj309219@gmail.com',
-      pass: 'raj309219'
+      user: '*',
+      pass: '*'
     }
   },
 
@@ -65,16 +72,17 @@ module.exports = {
   },
 
   mailOptions: {
-    from: 'raj309219@gmail.com',
-    replyTo: 'raj309219@gmail.com'
+    from: '*',
+    replyTo: '*'
   },
 
   emailDetails: {
-    supportEmail: 'raj309219@gmail.com',
+    supportEmail: '*',
     appName: 'App'
   },
 
-  host: 'https://elitemantra.com/deeplink',
+  host: 'http://localhost:4001/client',
+  serverUrl: '*',
   https: false,
   http: {},
   client: true,
@@ -88,60 +96,44 @@ module.exports = {
       clientId: '',
       tenantId: ''
     },
-    baseGraphURL: 'https://graph.microsoft.com',
+    baseGraphURL: '*',
     userInfo: '/v1.0/me',
+    recognizer: {
+      endpoint: '*',
+      key: '*'
+    },
+    vision: {
+      key: '*',
+      endpoint: '*'
+    },
     storage: {
-      baseURL: '',
-      accountName: '',
-      key: '',
-      connectionString: '',
-      containerName: '' // This name may only contain lowercase letters, numbers, and hyphens, and must begin with a letter or a number. Each hyphen must be preceded and followed by a non-hyphen character. The name must also be between 3 and 63 characters long.
+      baseURL: '*',
+      accountName: '*',
+      key: '*',
+      connectionString: '*',
+      containerName: '*' // This name may only contain lowercase letters, numbers, and hyphens, and must begin with a letter or a number. Each hyphen must be preceded and followed by a non-hyphen character. The name must also be between 3 and 63 characters long.
     }
   },
   firebase: {
-    "dynamicLinkInfo": {
-      "domainUriPrefix": "https://preciept.page.link",
-      "link": "https://preciept-app.web.app",
-      "androidInfo": {
-        "androidPackageName": "at.pits.preceipt",
-        "androidFallbackLink": "",
-        "androidMinPackageVersionCode": ""
-      },
-      "iosInfo": {
-        "iosBundleId": "at.pits.preceipt",
-        "iosFallbackLink": "",
-        "iosCustomScheme": "",
-        "iosIpadFallbackLink": "",
-        "iosIpadBundleId": "",
-        "iosAppStoreId": ""
-      },
-      "navigationInfo": {
-        "enableForcedRedirect": true
-      },
-      "analyticsInfo": {
-        "googlePlayAnalytics": {
-          "utmSource": "",
-          "utmMedium": "",
-          "utmCampaign": "",
-          "utmTerm": "",
-          "utmContent": "",
-          "gclid": ""
+    api: "*",
+    link: "*",
+    config: {
+      "dynamicLinkInfo": {
+        "domainUriPrefix": "*",
+        "link": "*",
+        "androidInfo": {
+          "androidPackageName": "*",
         },
-        "itunesConnectAnalytics": {
-          "at": "",
-          "ct": "",
-          "mt": "",
-          "pt": ""
+        "iosInfo": {
+          "iosBundleId": "*",
+        },
+        "navigationInfo": {
+          "enableForcedRedirect": true
         }
       },
-      "socialMetaTagInfo": {
-        "socialTitle": "",
-        "socialDescription": "",
-        "socialImageLink": ""
+      "suffix": {
+        "option": "SHORT"
       }
-    },
-    "suffix": {
-      "option": "SHORT"
     }
   }
 };

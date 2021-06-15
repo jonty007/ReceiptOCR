@@ -39,7 +39,10 @@ async function createStripePayment(payment_details, user, transaction) {
     }
 
     if (!user_details.stripe_customer_id) {
-      user_details.stripe_customer_id = await createStripeCustomer(user_details.email, user_details);
+      user_details.stripe_customer_id = await createStripeCustomer(
+        user_details.email,
+        user_details
+      );
       customer_id = user_details.stripe_customer_id;
     } else {
       customer_id = user_details.stripe_customer_id;
@@ -106,7 +109,10 @@ export async function createPayment(payment_details, transaction) {
 
     await User.update(
       {
-        status: user_details.status === UserStatus.ACTIVE ? UserStatus.ACTIVE : UserStatus.VERIFICATION_PENDING,
+        status:
+          user_details.status === UserStatus.ACTIVE
+            ? UserStatus.ACTIVE
+            : UserStatus.VERIFICATION_PENDING,
         stripe_card_id: subscription_details.card_id,
         stripe_customer_id: subscription_details.customer_id,
         subscription_plan: subscription_plan_id,
@@ -239,9 +245,8 @@ export async function getPaymentInformation(body, user) {
 
 export async function cancelSubscription(body) {
   try {
-
     let { subscription_id, actual_user_id } = body;
-    
+
     const user = await User.findOne({
       where: {
         id: actual_user_id,
@@ -257,13 +262,16 @@ export async function cancelSubscription(body) {
       cancel_at_period_end: true
     });
 
-    await User.update({
-      subscription_plan: 1
-    }, {
-      where: {
-        id: actual_user_id
+    await User.update(
+      {
+        subscription_plan: 1
+      },
+      {
+        where: {
+          id: actual_user_id
+        }
       }
-    })
+    );
     return subscription_details;
   } catch (error) {
     throw new Error(error.message);

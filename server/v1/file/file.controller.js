@@ -516,7 +516,6 @@ fileRouter.post('/file/profile-picture/update', isAuthenticated(), async (req, r
       });
 
       fileData.on('end', async data => {
-
         let fileContent = Buffer.concat(bufContent);
 
         let user = await User.findOne({
@@ -656,7 +655,6 @@ fileRouter.post('/file/company-logo/update', isAuthenticated(), async (req, res,
       });
 
       fileData.on('end', async data => {
-
         let fileContent = Buffer.concat(bufContent);
 
         let user = await User.findOne({

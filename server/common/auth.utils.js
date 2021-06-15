@@ -26,7 +26,6 @@ const createJWT = function({ data, exp, secret = jwtTokenSecret, hash_type = 'HS
     secret = jwtTokenSecret,
     hash_type = 'HS512'
   } = {}) {
-  
     const decoded = jwt.decode(token, secret, noVerify, hash_type);
     // if (decoded && decoded.exp && decoded.exp <= Date.now()) {
     //   throw new Error('Token expired');

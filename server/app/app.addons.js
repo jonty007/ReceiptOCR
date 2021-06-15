@@ -3,7 +3,7 @@ const emailService = require('../common/services/email/email_service'),
   s3Boundary = require('../boundaries/s3'),
   azureStorage = require('../boundaries/azure_storage'),
   firebaseBoundary = require('../boundaries/firebase'),
-  azureOCR = require('../boundaries/azure_ocr'),
+  // azureOCR = require('../boundaries/azure_ocr'),
   azureVision = require('../boundaries/azure_vision');
 // socketBoundary = require('../boundaries/socket');
 
