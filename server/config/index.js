@@ -7,7 +7,7 @@ var all = {
   env: process.env.NODE_ENV,
   root: path.normalize(__dirname + ".."), // Root path of server
   port: process.env.PORT || 4001, // Server port
-  jwtTokenSecret: "uoIXhwXY2YWGv736iNmht7mstgLPx3ydRWcoptz2z686oN2A1nBWF5gUxhgBEjn3bRzem3W44uhKSPPQVkvj6p153K7JhwGB9rfK5vRgesJlQrgHeH3ExixlmuhpjRLP80X5d",
+  jwtTokenSecret: "helloworld",
   // serverRootPath: "/api",
   logLevel: process.env.LOG_LEVEL || "debug"
 };
